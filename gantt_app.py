@@ -4,113 +4,101 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. הגדרות עמוד ---
-st.set_page_config(page_title="פרויקט Triage AI - DEBUG", layout="wide")
+st.set_page_config(page_title="פרויקט Triage AI", layout="wide")
 
-# ----------------------------------------------------
-st.title("🐞 מצב ניפוי באגים (Debug Mode) 🐞")
-st.warning("האפליקציה כרגע במצב ניפוי באגים. יוצגו נתונים גולמיים.")
-# ----------------------------------------------------
-
-# פונקציה לטעינה ועיבוד הנתונים
-def load_and_process_data(excel_file):
+# --- 2. פונקציה לטעינת וניקוי הנתונים (הגרסה הנקייה) ---
+@st.cache_data
+def load_data(excel_file):
     try:
-        st.subheader("שלב 1: טעינת קובץ האקסל")
-        # אנו מוסיפים sheet_name=None כדי לטעון את *כל* הגיליונות, ואז נבדוק
-        # אם יש יותר מגיליון אחד. 'header=8' אומר ששורה 9 היא הכותרת.
+        # קורא את קובץ האקסל, עם הכותרת בשורה 9 (אינדקס 8)
         df = pd.read_excel(excel_file, header=8, engine='openpyxl')
         
-        st.write(f"קובץ האקסל '{excel_file}' נטען בהצלחה.")
-        st.write("5 השורות הראשונות כפי שנקראו מהקובץ (נתונים גולמיים):")
-        st.dataframe(df.head())
-
-        st.subheader("שלב 2: ניקוי שורות וטורים ריקים")
+        # מנקה שורות וטורים ריקים
         df = df.dropna(how='all').dropna(axis=1, how='all')
-        st.write(f"לאחר ניקוי שורות/טורים ריקים, נשארו {len(df)} שורות.")
-        st.dataframe(df.head())
-
-        st.subheader("שלב 3: בחירת עמודות רלוונטיות")
+        
         # מנקה רווחים מיותרים משמות העמודות
         df.columns = df.columns.str.strip()
-        st.write("שמות העמודות שנמצאו בקובץ (אחרי ניקוי רווחים):")
-        st.write(df.columns.tolist())
         
+        # בודק אם העמודות החיוניות קיימות
         relevant_cols = ['Milestone description', 'Category', 'Start', 'Days', 'Progress']
-        st.write(f"הקוד מחפש את העמודות הבאות: {relevant_cols}")
-        
-        # בודק אם כל העמודות קיימות לפני שמנסה לגשת אליהן
-        missing_cols = [col for col in relevant_cols if col not in df.columns]
-        if missing_cols:
-            st.error(f"שגיאה קריטית: העמודות הבאות חסרות בקובץ האקסל שלך (או ששמן שונה): {missing_cols}")
-            return pd.DataFrame() # מחזיר טבלה ריקה
-
+        if not all(col in df.columns for col in relevant_cols):
+            st.error("שגיאה: חסרות עמודות חיוניות (Milestone description, Category, Start, Days, Progress) בקובץ האקסל.")
+            return pd.DataFrame()
+            
         df = df[relevant_cols]
-        st.write("לאחר בחירת עמודות רלוונטיות:")
-        st.dataframe(df.head())
-
-        st.subheader("שלב 4: סינון שורות ללא תאריך ('Start') או משך ('Days')")
-        st.write(f"מספר שורות לפני סינון 'Start'/'Days': {len(df)}")
-        df_before_drop = df.copy() # שומר עותק לבדיקה
         
+        # מסיר שורות שבהן חסר תאריך התחלה או משך
         df = df.dropna(subset=['Start', 'Days'])
         
-        st.write(f"מספר שורות אחרי סינון 'Start'/'Days': {len(df)}")
-        
-        if df.empty and not df_before_drop.empty:
-            st.error("זו הבעיה! כל השורות נמחקו בשלב 4.")
-            st.write("זה אומר שכל השורות היו חסרות ערך (NaN) בעמודות 'Start' או 'Days'.")
-            st.write("הנה הנתונים כפי שנראו *לפני* הסינון (שים לב לעמודות 'Start' ו-'Days'):")
-            st.dataframe(df_before_drop)
-            return pd.DataFrame() # מחזיר טבלה ריקה
-
-        st.success("הנתונים עברו את כל שלבי הסינון! ממשיכים לעיבוד...")
+        if df.empty:
+            st.warning("לא נמצאו משימות עם תאריך התחלה ומשך בקובץ.")
+            return pd.DataFrame()
 
         # --- 3. עיבוד הנתונים לפורמט של גאנט ---
         df_gantt = df.rename(columns={
             'Milestone description': 'Task',
-            'Start': 'Start_Date_Obj',
+            'Start': 'Start_Date_Obj', # משנה שם כדי למנוע בלבול
             'Category': 'Resource', 
             'Days': 'Duration'
         })
 
+        # המרת עמודות לתאריכים ומספרים
         df_gantt['Start'] = pd.to_datetime(df_gantt['Start_Date_Obj'])
         df_gantt['Duration'] = pd.to_numeric(df_gantt['Duration'])
+        
+        # חישוב תאריך סיום (כאן נשאיר אותו כאובייקט תאריך)
         df_gantt['Finish'] = df_gantt.apply(
             lambda row: row['Start'] + timedelta(days=row['Duration']), 
             axis=1
         )
-        df_gantt['Start'] = df_gantt['Start'].dt.strftime('%Y-%m-%d')
-        df_gantt['Finish'] = df_gantt['Finish'].dt.strftime('%Y-%m-%d')
         
         return df_gantt
 
     except FileNotFoundError:
-        st.error(f"הקובץ '{excel_file}' לא נמצא. ודא שהוא במאגר ה-GitHub.")
-        return pd.DataFrame()
-    except KeyError as e:
-        st.error(f"שגיאת 'KeyError'. זה אומר שחסרה עמודה: {e}")
-        st.write("בדוק ששמות העמודות בקובץ האקסל (בשורה 9) תואמים בדיוק.")
+        st.error(f"הקובץ '{excel_file}' לא נמצא במאגר.")
         return pd.DataFrame()
     except Exception as e:
-        st.error(f"אירעה שגיאה בלתי צפויה בקריאת הקובץ: {e}")
-        st.write("ייתכן שקובץ האקסל פגום או שהגדרת 'header=8' שגויה.")
+        st.error(f"אירעה שגיאה בקריאת קובץ האקסל: {e}")
         return pd.DataFrame()
 
-# --- טעינת הנתונים ---
-# ❗️ ודא ששם הקובץ הזה תואם בדיוק למה שנמצא ב-GitHub
+# --- 4. טעינת הנתונים ---
 FILE_PATH = 'GANTT_TAI.xlsx' 
-df_processed = load_and_process_data(FILE_PATH)
+df_processed = load_data(FILE_PATH)
 
-# --- 5. הצגת הגרף ---
-st.header("--- הצגת התרשים ---")
+# --- 5. הצגת האפליקציה ---
+st.title("📊 לוח גאנט אינטראקטיבי - פרויקט Smart Triage with AI")
+
 if not df_processed.empty:
-    st.write("מייצר את תרשים הגאנט...")
     
-    # הגדרת מפת צבעים מותאמת אישית לכל קטגוריה
+    # --- 6. חישוב טווחי תאריכים ---
+    project_start_date = df_processed['Start'].min()
+    # בהתאם לבקשתך: נחשב את היום הראשון בחודש של תחילת הפרויקט
+    project_start_month = project_start_date.replace(day=1)
+    
+    project_end_date = df_processed['Finish'].max()
+    today_date = pd.to_datetime(datetime.today().date()) # התאריך של היום, בלי שעה
+
+    # --- 7. הוספת בורר תצוגה ---
+    view_option = st.radio(
+        "בחר תצוגת ציר זמן:",
+        ('הצג מתחילת הפרויקט', 'הצג מהיום'), # האפשרויות
+        horizontal=True, # מציג את הכפתורים בשורה אחת
+    )
+
+    # --- 8. יצירת הגרף ---
+    
+    # הפונקציה create_gantt דורשת תאריכים כטקסט (string)
+    # ניצור עותק זמני עם הפורמט הנכון
+    df_for_gantt = df_processed.copy()
+    df_for_gantt['Start'] = df_for_gantt['Start'].dt.strftime('%Y-%m-%d')
+    df_for_gantt['Finish'] = df_for_gantt['Finish'].dt.strftime('%Y-%m-%d')
+    
+    tasks_list = df_for_gantt.to_dict('records')
+    
+    # הגדרת צבעים
     categories = df_processed['Resource'].unique()
     custom_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA', '#F08A5D', '#B2CC83', '#6E5773']
     color_map = {cat: color for cat, color in zip(categories, custom_colors)}
-
-    tasks_list = df_processed.to_dict('records')
 
     fig = ff.create_gantt(
         tasks_list,
@@ -122,19 +110,53 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
+    # --- 9. עדכון פריסה (Layout) לפי בחירת המשתמש ---
+    
+    # הגדרת טווח התצוגה הדינמי
+    if view_option == 'הצג מהיום':
+        start_range = today_date - timedelta(days=7) # מתחיל שבוע לפני היום
+    else: # 'הצג מתחילת הפרויקט'
+        start_range = project_start_month - timedelta(days=7) # מתחיל שבוע לפני תחילת החודש
+
+    # נוסיף קצת "רווח" בסוף הגרף
+    end_range = project_end_date + timedelta(days=15)
+
     fig.update_layout(
-        title='GANTT Chart: Smart Triage with AI Project',
+        title='Project Timeline',
         xaxis_title='Timeline',
         yaxis_title='Tasks',
         height=800,
-        font=dict(family="Arial, sans-serif", size=12)
+        font=dict(family="Arial, sans-serif", size=12),
+        # הפקודה שקובעת את טווח ציר ה-X
+        xaxis_range=[start_range, end_range] 
     )
-    
+
+    # --- 10. הוספת קו "היום" (Today Line) ---
+    fig.add_shape(
+        type="line",
+        x0=today_date, y0=0,
+        x1=today_date, y1=1,
+        yref="paper", # הקו נמתח מלמטה (0) עד למעלה (1)
+        line=dict(color="Red", width=2, dash="dash")
+    )
+    # הוספת טקסט מעל הקו
+    fig.add_annotation(
+        x=today_date,
+        y=1.05, # מיקום קצת מעל הגרף
+        yref="paper",
+        text="Today",
+        showarrow=False,
+        font=dict(color="Red")
+    )
+
+    # --- 11. הצגת הגרף והטבלה ---
     st.plotly_chart(fig, use_container_width=True)
     
-    with st.expander("הצג את טבלת הנתונים המעובדת (Data Table)"):
+    with st.expander("הצג את טבלת הנתונים המלאה (Data Table)"):
+        # מציג את הטבלה עם עמודות התאריך כפי שחושבו
         st.dataframe(df_processed[['Task', 'Resource', 'Start', 'Finish', 'Duration', 'Progress']])
 
 else:
-    st.error("לא ניתן להציג תרשים גאנט מכיוון שהטבלה המעובדת ריקה.")
-    st.write("גלול למעלה ובדוק את הפלט של מצב ניפוי הבאגים כדי לראות איפה הנתונים נמחקו.")
+    # הודעה למקרה שהקובץ נטען אך הוא ריק
+    st.error("טעינת הנתונים נכשלה או שלא נמצאו משימות תקינות בקובץ.")
+    st.info("אנא ודא שקובץ האקסל תקין ומכיל את העמודות הנדרשות (שורה 9 היא הכותרת).")
