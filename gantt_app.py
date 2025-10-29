@@ -96,38 +96,39 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # --- 8. עדכון פריסה (Layout) ---
+    # --- 8. עדכון פריסה (Layout) - ⭐️ כאן התיקון ⭐️ ---
+    # הגישה שונתה: כל רכיב מוגדר בנפרד ברמה העליונה
     fig.update_layout(
         yaxis_title='משימות',
         height=800,
         font=dict(family="Open Sans Hebrew, sans-serif", size=12),
         
-        xaxis=dict(
-            title='ציר זמן', 
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                         label="1W",
-                         step="week",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1M",
-                         step="month",
-                         stepmode="backward"),
-                    dict(count=3,
-                         label="3M",
-                         step="month",
-                         stepmode="backward"),
-                    dict(step="all",
-                         label="All")
-                ]),
-                font=dict(family="Open Sans Hebrew, sans-serif", size=12),
-                bgcolor="#f0f2f6",
-                bordercolor="#d1d1d1",
-                borderwidth=1,
-                activecolor="#e0e0e0"
-            )
-            # ⭐️ type="date" הוסר מכאן ⭐️
+        # הגדרת הכותרת של ציר X
+        xaxis_title='ציר זמן', 
+        
+        # הגדרת ה-rangeselector
+        xaxis_rangeselector=dict(
+            buttons=list([
+                dict(count=1,
+                     label="1W",
+                     step="week",
+                     stepmode="backward"),
+                dict(count=1,
+                     label="1M",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=3,
+                     label="3M",
+                     step="month",
+                     stepmode="backward"),
+                dict(step="all",
+                     label="All")
+            ]),
+            font=dict(family="Open Sans Hebrew, sans-serif", size=12),
+            bgcolor="#f0f2f6",
+            bordercolor="#d1d1d1",
+            borderwidth=1,
+            activecolor="#e0e0e0"
         )
     )
 
