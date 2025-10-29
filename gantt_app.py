@@ -12,7 +12,7 @@ st.set_page_config(page_title="פרויקט Triage AI", layout="wide")
 def load_data(csv_file):
     try:
         # טוען את ה-CSV. הכותרת האמיתית נמצאת בשורה 9 (אינדקס 8)
-        df = pd.read_csv(csv_file, header=8, encoding='cp1255')
+        df = pd.read_csv(csv_file, header=8, encoding='iso-8859-8')
         
         # מנקה שורות וטורים ריקים
         df = df.dropna(how='all').dropna(axis=1, how='all')
