@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 @st.cache_data  # שומר את הנתונים בזיכרון מטמון לביצועים מהירים
 def load_data(excel_file): # שיניתי את שם המשתנה לבהירות
     try:
-        # --- ⭐️ התיקון העיקרי כאן ⭐️ ---
         # אנחנו קוראים קובץ אקסל, לא CSV.
         # אנחנו משתמשים ב-engine='openpyxl' שדורש את הספרייה שהוספנו
         df = pd.read_excel(excel_file, header=8, engine='openpyxl')
