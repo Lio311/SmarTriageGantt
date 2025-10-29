@@ -97,7 +97,7 @@ def load_and_process_data(excel_file):
 
 # --- טעינת הנתונים ---
 # ❗️ ודא ששם הקובץ הזה תואם בדיוק למה שנמצא ב-GitHub
-FILE_PATH = 'GANTT_TAI.xlsx - Light.csv' 
+FILE_PATH = 'GANTT_TAI.xlsx' 
 df_processed = load_and_process_data(FILE_PATH)
 
 # --- 5. הצגת הגרף ---
