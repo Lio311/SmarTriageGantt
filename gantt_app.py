@@ -14,7 +14,6 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
-    /* שינוי פונט גם לכפתורים בתוך הגרף */
     .plotly .rangeselector .period-label {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
@@ -74,8 +73,7 @@ df_processed = load_data(FILE_PATH)
 
 if not df_processed.empty:
     
-    # --- 6. חישוב תאריכים ---
-    today_date = pd.to_datetime(datetime.today().date()) # התאריך של היום
+    today_date = pd.to_datetime(datetime.today().date())
 
     # --- 7. יצירת הגרף ---
     df_for_gantt = df_processed.copy()
@@ -98,15 +96,16 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # --- 8. עדכון פריסה (Layout) ---
+    # --- 8. עדכון פריסה (Layout) - ⭐️ כאן התיקון ⭐️ ---
     fig.update_layout(
-        xaxis_title='ציר זמן',
+        # xaxis_title הוסר מכאן
         yaxis_title='משימות',
         height=800,
         font=dict(family="Open Sans Hebrew, sans-serif", size=12),
         
-        # --- ⭐️ הוספת ה-Rangeselector המבוקש ⭐️ ---
+        # כל ההגדרות של ציר X נמצאות עכשיו בתוך אותו מילון
         xaxis=dict(
+            title='ציר זמן', # <-- xaxis_title הועבר לכאן
             rangeselector=dict(
                 buttons=list([
                     dict(count=1,
@@ -122,16 +121,15 @@ if not df_processed.empty:
                          step="month",
                          stepmode="backward"),
                     dict(step="all",
-                         label="All") # הכפתור באנגלית
+                         label="All")
                 ]),
-                # הגדרות עיצוב הכפתורים
                 font=dict(family="Open Sans Hebrew, sans-serif", size=12),
                 bgcolor="#f0f2f6",
                 bordercolor="#d1d1d1",
                 borderwidth=1,
                 activecolor="#e0e0e0"
             ),
-            type="date" # חשוב לציין שציר ה-X הוא תאריך
+            type="date"
         )
     )
 
