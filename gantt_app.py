@@ -96,28 +96,26 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # --- 8. עדכון פריסה (Layout) - ⭐️ כאן התיקון ⭐️ ---
+    # --- 8. עדכון פריסה (Layout) ---
     fig.update_layout(
-        # xaxis_title הוסר מכאן
         yaxis_title='משימות',
         height=800,
         font=dict(family="Open Sans Hebrew, sans-serif", size=12),
         
-        # כל ההגדרות של ציר X נמצאות עכשיו בתוך אותו מילון
         xaxis=dict(
-            title='ציר זמן', # <-- xaxis_title הועבר לכאן
+            title='ציר זמן', 
             rangeselector=dict(
                 buttons=list([
                     dict(count=1,
-                         label="1W", # שבוע אחורה מהיום
+                         label="1W",
                          step="week",
                          stepmode="backward"),
                     dict(count=1,
-                         label="1M", # חודש אחורה מהיום
+                         label="1M",
                          step="month",
                          stepmode="backward"),
                     dict(count=3,
-                         label="3M", # 3 חודשים אחורה מהיום
+                         label="3M",
                          step="month",
                          stepmode="backward"),
                     dict(step="all",
@@ -128,8 +126,8 @@ if not df_processed.empty:
                 bordercolor="#d1d1d1",
                 borderwidth=1,
                 activecolor="#e0e0e0"
-            ),
-            type="date"
+            )
+            # ⭐️ type="date" הוסר מכאן ⭐️
         )
     )
 
