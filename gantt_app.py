@@ -12,7 +12,7 @@ st.set_page_config(page_title="פרויקט Triage AI", layout="wide")
 def load_data(csv_file):
     try:
         # טוען את ה-CSV. הכותרת האמיתית נמצאת בשורה 9 (אינדקס 8)
-        df = pd.read_csv(csv_file, header=8)
+        df = pd.read_csv(csv_file, header=8, encoding='cp1255')
         
         # מנקה שורות וטורים ריקים
         df = df.dropna(how='all').dropna(axis=1, how='all')
@@ -60,7 +60,7 @@ def load_data(csv_file):
         return pd.DataFrame()
 
 # --- 4. טעינת הנתונים ---
-FILE_PATH = 'GANTT TAI.xlsx'
+FILE_PATH = 'GANTT_TAI.xlsx'
 df_processed = load_data(FILE_PATH)
 
 if not df_processed.empty:
