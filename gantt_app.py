@@ -60,7 +60,7 @@ def load_data(csv_file):
         return pd.DataFrame()
 
 # --- 4. טעינת הנתונים ---
-FILE_PATH = 'GANTT TAI.xlsx - Light.csv'
+FILE_PATH = 'GANTT TAI.xlsx'
 df_processed = load_data(FILE_PATH)
 
 if not df_processed.empty:
