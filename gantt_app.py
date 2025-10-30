@@ -139,7 +139,6 @@ if not df_processed.empty:
         """Callback for 3M, 1M, 1W buttons"""
         st.session_state.view_option = view
 
-    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
     def restart_chart():
         """Callback for All and Restart buttons to force zoom reset"""
         st.session_state.view_option = 'All'
@@ -236,7 +235,6 @@ if not df_processed.empty:
     )
 
     # --- 14. Display the graph ---
-    # ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️
     # Pass the key to force component recreation on restart
     chart_key = f"gantt_chart_{st.session_state.chart_key}"
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=chart_key)
