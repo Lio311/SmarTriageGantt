@@ -3,10 +3,14 @@ import pandas as pd
 import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
-# 1. Page Configuration (wide layout)
+# --- 0. Clear Cache on Every Run (User Request) ---
+# This forces Streamlit to re-load data functions
+st.cache_data.clear()
+
+# --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="לוח גאנט", layout="wide")
 
-# 2. Add Open Sans Hebrew font for the entire site
+# --- 2. Add Open Sans Hebrew font for the entire site ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
@@ -17,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Function to load and clean data
+# --- 3. Function to load and clean data ---
 @st.cache_data
 def load_data(excel_file):
     try:
@@ -65,20 +69,20 @@ def load_data(excel_file):
         st.error(f"אירעה שגיאה בקריאת קובץ האקסל: {e}")
         return pd.DataFrame()
 
-# 4. Load data
+# --- 4. Load data ---
 FILE_PATH = 'GANTT_TAI.xlsx' 
 df_processed = load_data(FILE_PATH)
 
-# 5. Display the application
+# --- 5. Display the application ---
 if not df_processed.empty:
     
-    # 6. Calculate date ranges
+    # --- 6. Calculate date ranges ---
     project_start_date = df_processed['Start'].min()
     project_start_month = project_start_date.replace(day=1) 
     project_end_date = df_processed['Finish'].max()
     today_date = pd.to_datetime(datetime.today().date()) 
 
-    # 7. New display range selector
+    # --- 7. New display range selector ---
     view_option = st.radio(
         "בחר תצוגת ציר זמן:",
         ('הכל', '3 חודשים', 'חודש', 'שבוע'), # The options
@@ -86,7 +90,7 @@ if not df_processed.empty:
         horizontal=True, # Displays the buttons in one line
     )
 
-    # 8. Create the graph
+    # --- 8. Create the graph ---
     df_for_gantt = df_processed.copy()
     df_for_gantt['Start'] = df_for_gantt['Start'].dt.strftime('%Y-%m-%d')
     df_for_gantt['Finish'] = df_for_gantt['Finish'].dt.strftime('%Y-%m-%d')
@@ -107,7 +111,7 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # 9. Update layout based on user selection
+    # --- 9. Update layout based on user selection ---
     if view_option == 'שבוע':
         start_range = today_date - timedelta(days=1) 
         end_range = today_date + timedelta(days=7) 
@@ -121,7 +125,7 @@ if not df_processed.empty:
         start_range = project_start_month - timedelta(days=7) 
         end_range = project_end_date + timedelta(days=15) 
 
-    # --- THIS IS THE FIX ---
+    # --- 10. THIS IS THE FIX ---
     # We assign properties directly to fig.layout to avoid the ValueError
     # This block REPLACES the fig.update_layout() command
     
@@ -131,7 +135,7 @@ if not df_processed.empty:
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
 
-    # 10. Add "Today" Line
+    # --- 11. Add "Today" Line ---
     fig.add_shape(
         type="line",
         x0=today_date, y0=0,
@@ -148,7 +152,7 @@ if not df_processed.empty:
         font=dict(color="Red", family="Open Sans Hebrew, sans-serif")
     )
 
-    # 11. Display the graph
+    # --- 12. Display the graph ---
     st.plotly_chart(fig, use_container_width=True)
 
 else:
