@@ -9,7 +9,7 @@ st.cache_data.clear()
 # --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
-# --- 2. Font Styling (Buttons Smaller) ---
+# --- 2. Font Styling ---
 # This CSS applies the font globally
 st.markdown("""
     <style>
@@ -18,12 +18,11 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
-    
     /* Style all buttons to be smaller */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 15px;     /* הקטנו את הגובה מ-40 */
-        font-size: 6px;  /* הוספנו הקטנה לפונט */
+        height: 35px;     /* Smaller height */
+        font-size: 13px;  /* Smaller font */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -122,6 +121,8 @@ df_processed = load_data(FILE_PATH)
 # --- 6. Initialize Session State for View Selector ---
 if 'view_option' not in st.session_state:
     st.session_state.view_option = 'All' # Default view
+if 'chart_key' not in st.session_state:
+    st.session_state.chart_key = 0 # Key to force chart refresh
 
 # --- 7. Display the application ---
 if not df_processed.empty:
@@ -135,15 +136,20 @@ if not df_processed.empty:
     # --- 9. Display Buttons (Centered and Smaller) ---
     
     def set_view(view):
-        """Callback function to set the view in session state"""
+        """Callback for 3M, 1M, 1W buttons"""
         st.session_state.view_option = view
 
+    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
+    def restart_chart():
+        """Callback for All and Restart buttons to force zoom reset"""
+        st.session_state.view_option = 'All'
+        st.session_state.chart_key += 1 # Increment the key to force re-render
+
     # Create 7 columns: spacers on the sides, 5 for buttons in the center
-    # The ratio [4, 1, 1, 1, 1, 1, 4] makes the buttons narrower
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([4, 1, 1, 1, 1, 1, 4])
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([2, 1, 1, 1, 1, 1, 2])
     
     with col1:
-        st.button("All", on_click=set_view, args=('All',), use_container_width=True)
+        st.button("All", on_click=restart_chart, use_container_width=True) # Calls restart_chart
     with col2:
         st.button("3M", on_click=set_view, args=('3M',), use_container_width=True)
     with col3:
@@ -151,8 +157,8 @@ if not df_processed.empty:
     with col4:
         st.button("1W", on_click=set_view, args=('1W',), use_container_width=True)
     with col5:
-        # Restart button also sets the view to 'All'
-        st.button("Restart", on_click=set_view, args=('All',), use_container_width=True)
+        # Restart button also calls restart_chart
+        st.button("Restart", on_click=restart_chart, use_container_width=True)
 
     # Read the current view option from session state
     view_option = st.session_state.view_option
@@ -230,8 +236,10 @@ if not df_processed.empty:
     )
 
     # --- 14. Display the graph ---
-    # config={'displayModeBar': False} hides the Plotly toolbar
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    # ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️
+    # Pass the key to force component recreation on restart
+    chart_key = f"gantt_chart_{st.session_state.chart_key}"
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=chart_key)
 
 else:
     # Message in case the file was loaded but is empty
