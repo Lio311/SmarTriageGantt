@@ -13,6 +13,9 @@ st.set_page_config(page_title="Gantt Chart", layout="wide")
 # This CSS applies the font globally AND hides the Plotly modebar
 st.markdown("""
     <style>
+    /* --- ⭐️ ⭐️ ⭐️ CACHE BUSTER V101 ⭐️ ⭐️ ⭐️ --- */
+    /* (This comment is to force Streamlit Cloud to reload the CSS) */
+
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
     
     html, body, [class*="st-"], [class*="css-"] {
@@ -26,7 +29,6 @@ st.markdown("""
         font-size: 13px;  /* Smaller font */
     }
 
-    /* --- ⭐️ ⭐️ ⭐️ התיקון החדש כאן ⭐️ ⭐️ ⭐️ --- */
     /* Aggressively hide the Plotly modebar */
     .modebar {
         display: none !important;
