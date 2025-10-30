@@ -21,7 +21,7 @@ st.markdown("""
     /* Style all buttons to be full-width *within their column* */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 40px; 
+        height: 20px; 
     }
     </style>
     """, unsafe_allow_html=True)
@@ -207,7 +207,7 @@ if not df_processed.empty:
     
     fig.layout.xaxis.title = 'Timeline'
     fig.layout.yaxis.title = 'Tasks (Grouped by Category)'
-    fig.layout.height = 300
+    fig.layout.height = 800
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
 
