@@ -22,10 +22,12 @@ st.markdown("""
         height: 35px;
         font-size: 13px;
     }
-
-    /* --- תיקון CSS להסתרת סרגל הכלים --- */
-    div[data-testid="stPlotlyChart"] .modebar {
-        display: none !important;
+    # --- NEW: Enlarged Title ---
+    st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
+    
+        /* --- תיקון CSS להסתרת סרגל הכלים --- */
+        div[data-testid="stPlotlyChart"] .modebar {
+            display: none !important;
     }
     
     </style>
