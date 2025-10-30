@@ -9,7 +9,7 @@ st.cache_data.clear()
 # --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
-# --- 2. Font Styling ---
+# --- 2. Font Styling (Buttons Smaller) ---
 # This CSS applies the font globally
 st.markdown("""
     <style>
@@ -18,10 +18,13 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
-    /* Style all buttons to be full-width *within their column* */
+    
+    /* ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ */
+    /* Style all buttons to be smaller */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 5px; 
+        height: 35px;     /* הקטנו את הגובה מ-40 */
+        font-size: 13px;  /* הוספנו הקטנה לפונט */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -130,16 +133,16 @@ if not df_processed.empty:
     project_end_date = df_processed['Finish'].max()
     today_date = pd.to_datetime(datetime.today().date()) 
 
-    # --- 9. Display Buttons (Centered) ---
+    # --- 9. Display Buttons (Centered and Smaller) ---
     
     def set_view(view):
         """Callback function to set the view in session state"""
         st.session_state.view_option = view
 
-    # --- THIS IS THE CHANGE ---
+    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
     # Create 7 columns: spacers on the sides, 5 for buttons in the center
-    # The ratio [6, 1, 1, 1, 1, 1, 6] centers the buttons
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([5, 1, 1, 1, 1, 1, 5])
+    # The ratio [2, 1, 1, 1, 1, 1, 2] makes the buttons narrower
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([2, 1, 1, 1, 1, 1, 2])
     
     with col1:
         st.button("All", on_click=set_view, args=('All',), use_container_width=True)
