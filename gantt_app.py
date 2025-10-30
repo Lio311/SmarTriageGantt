@@ -26,9 +26,6 @@ st.markdown("""
         min-width: auto;  /* Allow smaller width */
         margin: 0 1px;  /* Almost touching (1px gap) */
     }
-    text[text="undefined"] {
-    display: none !important;
-}
     
     /* --- תיקון CSS להסתרת סרגל הכלים --- */
     div[data-testid="stPlotlyChart"] .modebar {
