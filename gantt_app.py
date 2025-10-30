@@ -3,16 +3,13 @@ import pandas as pd
 import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
-# --- 0. Clear Cache on Every Run ---
-st.cache_data.clear()
-
 # --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
 st.markdown("""
     <style>
-    /* CACHE BUSTER V104 */
+    /* CACHE BUSTER V105 */ 
 
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
     
@@ -26,9 +23,11 @@ st.markdown("""
         font-size: 13px;
     }
 
-    .modebar {
+    /* --- תיקון CSS להסתרת סרגל הכלים --- */
+    div[data-testid="stPlotlyChart"] .modebar {
         display: none !important;
     }
+    
     </style>
     """, unsafe_allow_html=True)
 
@@ -83,7 +82,7 @@ def load_data(excel_file):
         st.error(f"An error occurred while reading the Excel file: {e}")
         return pd.DataFrame()
 
-FILE_PATH = 'GANTT_TAI.xlsx' 
+FILE_PATH = 'GANTT_TAI.xlsx'  
 df_processed = load_data(FILE_PATH)
 
 if 'view_option' not in st.session_state:
