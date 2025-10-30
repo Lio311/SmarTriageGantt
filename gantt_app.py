@@ -49,18 +49,6 @@ def calculate_progress(row, today):
     # Cap at 1.0 (100%) and convert to 0-100 scale
     return min(progress, 1.0) * 100
 
-def get_progress_color_name(p):
-    """
-    Returns a color string (name) based on the progress percentage.
-    """
-    if p < 25:
-        return 'Red (0-24%)'
-    if p < 50:
-        return 'Yellow (25-49%)'
-    if p < 75:
-        return 'Orange (50-74%)'
-    return 'Green (75-100%)'
-
 # --- 4. Function to load and clean data ---
 @st.cache_data
 def load_data(excel_file):
@@ -91,7 +79,7 @@ def load_data(excel_file):
         df_gantt = df.rename(columns={
             'Milestone description': 'Task',
             'Start': 'Start_Date_Obj',
-            'Category': 'Resource', 
+            'Category': 'Resource', # 'Resource' is used for grouping
             'Days': 'Duration'
         })
 
@@ -110,11 +98,11 @@ def load_data(excel_file):
         # Create 'Progress' column (0-100) for the shading
         df_gantt['Progress'] = df_gantt.apply(lambda row: calculate_progress(row, today), axis=1)
         
-        # Create 'Color' column for grouping
-        df_gantt['Color'] = df_gantt['Progress'].apply(get_progress_color_name)
-        
         # Append percentage to Task name
         df_gantt['Task'] = df_gantt['Task'] + " (" + df_gantt['Progress'].round(0).astype(int).astype(str) + "%)"
+        
+        # Clean up category names from potential newlines
+        df_gantt['Resource'] = df_gantt['Resource'].str.replace('\n', ' ', regex=False).str.strip()
         
         return df_gantt
 
@@ -175,21 +163,25 @@ if not df_processed.empty:
     tasks_list = df_for_gantt.to_dict('records')
 
     # --- THIS IS THE FIX ---
-    # We must use explicit RGB strings instead of simple names like 'red'
-    # to avoid the TypeError in Plotly's color parser.
-    color_map = {
-        'Red (0-24%)': 'rgb(239, 83, 80)',      # Red
-        'Yellow (25-49%)': 'rgb(255, 241, 118)', # Yellow
-        'Orange (50-74%)': 'rgb(255, 167, 38)', # Orange
-        'Green (75-100%)': 'rgb(102, 187, 106)' # Green
-    }
+    # 1. Define distinct colors for each CATEGORY
+    categories = df_processed['Resource'].unique()
+    # Using a predefined list of distinct colors
+    color_palette = [
+        'rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 
+        'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 
+        'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 
+        'rgb(23, 190, 207)'
+    ]
+    
+    # Create the color map {CategoryName: color}
+    color_map = {cat: color_palette[i % len(color_palette)] for i, cat in enumerate(categories)}
 
-    # Create the figure
+    # 2. Create the figure
     fig = ff.create_gantt(
         tasks_list,
-        colors=color_map,          # Pass the color dictionary
-        index_col='Color',         # Group by the 'Color' column
-        show_colorbar=True,      # ⭐️ This shows the legend on the right ⭐️
+        colors=color_map,          # Pass the category color dictionary
+        index_col='Resource',      # Group by 'Resource' (Category)
+        show_colorbar=True,      # Show the category legend on the right
         group_tasks=True,          # This will create the groups
         showgrid_x=True,
         showgrid_y=True
@@ -213,7 +205,7 @@ if not df_processed.empty:
     # This direct assignment avoids the ValueError
     
     fig.layout.xaxis.title = 'Timeline'
-    fig.layout.yaxis.title = 'Tasks (Grouped by Progress)'
+    fig.layout.yaxis.title = 'Tasks (Grouped by Category)'
     fig.layout.height = 800
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
