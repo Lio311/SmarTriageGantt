@@ -9,8 +9,8 @@ st.cache_data.clear()
 # --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
-# --- 2. Font Styling ---
-# This CSS applies the font globally
+# --- 2. Font Styling (and Modebar Hide Fix) ---
+# This CSS applies the font globally AND hides the Plotly modebar
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
@@ -18,11 +18,18 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
+    
     /* Style all buttons to be smaller */
     div[data-testid="stButton"] > button {
         width: 100%;
         height: 35px;     /* Smaller height */
         font-size: 13px;  /* Smaller font */
+    }
+
+    /* --- ⭐️ ⭐️ ⭐️ התיקון החדש כאן ⭐️ ⭐️ ⭐️ --- */
+    /* Aggressively hide the Plotly modebar */
+    .modebar {
+        display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -237,6 +244,8 @@ if not df_processed.empty:
     # --- 14. Display the graph ---
     # Pass the key to force component recreation on restart
     chart_key = f"gantt_chart_{st.session_state.chart_key}"
+    
+    # We still keep the config={'displayModeBar': False} as a fallback
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=chart_key)
 
 else:
