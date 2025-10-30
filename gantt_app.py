@@ -13,13 +13,13 @@ st.set_page_config(page_title="Gantt Chart", layout="wide")
 # This CSS applies the font globally AND hides the Plotly modebar
 st.markdown("""
     <style>
-    /* --- CACHE BUSTER V103 --- */
+    /* --- CACHE BUSTER V104 --- */
     /* (This comment is to force Streamlit Cloud to reload the CSS) */
 
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
     
     html, body, [class*="st-"], [class*="css-"] {
-        font-family: 'Open Sans Hebrew', sans-serif !important;
+        font-family: 'Open Sans Hebrew', sans-serif !importan
     }
     
     /* Style all buttons to be smaller */
@@ -180,23 +180,32 @@ if not df_processed.empty:
     tasks_list = df_for_gantt.to_dict('records')
 
     # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
-    # Define distinct colors for each CATEGORY based on user image
-    categories = df_processed['Resource'].unique()
+    # Create a STATIC color map that maps exact names to exact colors
+    # Based on the user's image
+    color_map = {
+        'Planning & Preparation': 'rgb(0, 117, 220)',        # Blue
+        'Development & Implementation': 'rgb(0, 103, 0)',    # Dark Green
+        'Documentation': 'rgb(146, 0, 192)',                 # Purple
+        'Evaluation & Visual Interface': 'rgb(255, 0, 0)',    # Red
+        'Progress Monitoring & Mentorship': 'rgb(0, 194, 255)',# Light Blue
+        'Bureaucracy & Procurement': 'rgb(255, 128, 0)',     # Orange
+        
+        # Adding fallback colors from the image just in case
+        'Other1': 'rgb(22, 198, 12)',                         # Lime Green
+        'Other2': 'rgb(255, 220, 0)'                          # Yellow
+    }
     
-    # New color palette exactly from the image
-    color_palette = [
-        'rgb(0, 117, 220)',   # Blue
-        'rgb(22, 198, 12)',   # Lime Green
-        'rgb(146, 0, 192)',   # Purple
-        'rgb(255, 0, 0)',     # Red
-        'rgb(0, 194, 255)',   # Light Blue
-        'rgb(255, 128, 0)',   # Orange
-        'rgb(0, 103, 0)',     # Dark Green
-        'rgb(255, 220, 0)'    # Yellow
-    ]
+    # Get all unique categories from the data
+    categories_in_data = df_processed['Resource'].unique()
     
-    # Create the color map {CategoryName: color}
-    color_map = {cat: color_palette[i % len(color_palette)] for i, cat in enumerate(categories)}
+    # Ensure any category *not* in our map gets a fallback color
+    # This prevents the app from crashing if a new category is added
+    fallback_colors = ['rgb(128, 128, 128)', 'rgb(22, 198, 12)', 'rgb(255, 220, 0)']
+    color_index = 0
+    for cat in categories_in_data:
+        if cat not in color_map:
+            color_map[cat] = fallback_colors[color_index % len(fallback_colors)]
+            color_index += 1
 
     # Create the figure
     fig = ff.create_gantt(
