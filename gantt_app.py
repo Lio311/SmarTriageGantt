@@ -17,21 +17,29 @@ st.markdown("""
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
     
+    /* Updated button styles: Smaller buttons */
     div[data-testid="stButton"] > button {
-        width: 100%;
-        height: 35px;
-        font-size: 13px;
-    }
-    # --- NEW: Enlarged Title ---
-    st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
-    
-        /* --- תיקון CSS להסתרת סרגל הכלים --- */
-        div[data-testid="stPlotlyChart"] .modebar {
-            display: none !important;
+        width: 60px;  /* Fixed width for smaller buttons */
+        height: 25px;  /* Reduced height */
+        font-size: 10px;  /* Smaller font */
+        padding: 0px;  /* Remove padding if needed */
+        min-width: auto;  /* Allow smaller width */
     }
     
+    /* --- תיקון CSS להסתרת סרגל הכלים --- */
+    div[data-testid="stPlotlyChart"] .modebar {
+        display: none !important;
+    }
+    
+    /* Additional CSS to hide rangeselector if needed */
+    .plotly .rangeselector {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
+
+# --- NEW: Enlarged Title ---
+st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
 
 def calculate_progress(row, today):
     start_date = row['Start']
@@ -105,7 +113,8 @@ if not df_processed.empty:
         st.session_state.view_option = 'All'
         st.session_state.chart_key += 1
 
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([2, 1, 1, 1, 1, 1, 2])
+    # Updated columns: Make button columns narrower (0.7 instead of 1)
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([3, 0.7, 0.7, 0.7, 0.7, 0.7, 3])
     with col1:
         st.button("All", on_click=restart_chart, use_container_width=True)
     with col2:
