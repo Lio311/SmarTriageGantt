@@ -3,6 +3,10 @@ import pandas as pd
 import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
+# --- 0. Clear Cache on Every Run ---
+# This forces Streamlit to re-load data functions just in case
+st.cache_data.clear()
+
 # 1. Page Configuration (wide layout)
 st.set_page_config(page_title="לוח גאנט", layout="wide")
 
@@ -130,7 +134,7 @@ if not df_processed.empty:
 
     # --- THIS IS THE FIX ---
     # The fig.update_layout() command caused the ValueError crash.
-    # This direct assignment method avoids the crash.
+    # This direct assignment method (fig.layout.x = ...) avoids the crash.
     
     fig.layout.xaxis.title = 'ציר זמן'
     fig.layout.yaxis.title = 'משימות'
