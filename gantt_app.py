@@ -10,154 +10,103 @@ st.cache_data.clear()
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
-# This CSS applies the font globally AND hides the Plotly modebar
 st.markdown("""
     <style>
-    /* --- CACHE BUSTER V104 --- */
-    /* (This comment is to force Streamlit Cloud to reload the CSS) */
+    /* CACHE BUSTER V104 */
 
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
     
     html, body, [class*="st-"], [class*="css-"] {
-        font-family: 'Open Sans Hebrew', sans-serif !importan
+        font-family: 'Open Sans Hebrew', sans-serif !important;
     }
     
-    /* Style all buttons to be smaller */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 35px;     /* Smaller height */
-        font-size: 13px;  /* Smaller font */
+        height: 35px;
+        font-size: 13px;
     }
 
-    /* Aggressively hide the Plotly modebar */
     .modebar {
         display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. Helper Functions for Progress Calculation ---
-
 def calculate_progress(row, today):
-    """
-    Calculates the progress percentage (0-100).
-    Logic: (days_passed / duration)
-    """
     start_date = row['Start']
     duration = row['Duration']
-    
     if today < start_date:
         return 0.0
     if duration <= 0:
         return 0.0
-
-    # Calculate days passed (+1 to include the start day)
     days_passed = (today - start_date).days + 1
-    
     progress = (days_passed / duration)
-    
-    # Cap at 1.0 (100%) and convert to 0-100 scale
     return min(progress, 1.0) * 100
 
-# --- 4. Function to load and clean data ---
 @st.cache_data
 def load_data(excel_file):
-    """
-    Loads, cleans, and processes data from the Excel file.
-    """
     try:
-        # Reads the Excel file, with the header at row 9 (index 8)
         df = pd.read_excel(excel_file, header=8, engine='openpyxl')
-        
         df = df.dropna(how='all').dropna(axis=1, how='all')
         df.columns = df.columns.str.strip()
-        
         relevant_cols = ['Milestone description', 'Category', 'Start', 'Days']
-        # Check for essential columns
         if not all(col in df.columns for col in relevant_cols):
             st.error("Error: Missing essential columns (Milestone description, Category, Start, Days) in the Excel file.")
             return pd.DataFrame()
-            
         df = df[relevant_cols]
         df = df.dropna(subset=['Start', 'Days'])
-        
         if df.empty:
             st.warning("No tasks with valid Start date and Days duration found in the file.")
             return pd.DataFrame()
 
-        # Process data into Gantt format
         df_gantt = df.rename(columns={
             'Milestone description': 'Task',
             'Start': 'Start_Date_Obj',
-            'Category': 'Resource', # 'Resource' is used for grouping
+            'Category': 'Resource',
             'Days': 'Duration'
         })
 
         df_gantt['Start'] = pd.to_datetime(df_gantt['Start_Date_Obj'])
         df_gantt['Duration'] = pd.to_numeric(df_gantt['Duration'])
-        
-        # Calculate finish date
-        df_gantt['Finish'] = df_gantt.apply(
-            lambda row: row['Start'] + timedelta(days=row['Duration']), 
-            axis=1
-        )
-        
-        # --- Apply Progress Logic ---
+        df_gantt['Finish'] = df_gantt.apply(lambda row: row['Start'] + timedelta(days=row['Duration']), axis=1)
+
         today = pd.to_datetime(datetime.today().date())
-        
-        # Create 'Progress' column (0-100) for the shading
         df_gantt['Progress'] = df_gantt.apply(lambda row: calculate_progress(row, today), axis=1)
-        
-        # Append percentage to Task name
         df_gantt['Task'] = df_gantt['Task'] + " (" + df_gantt['Progress'].round(0).astype(int).astype(str) + "%)"
-        
-        # Clean up category names from potential newlines
         df_gantt['Resource'] = df_gantt['Resource'].str.replace('\n', ' ', regex=False).str.strip()
-        
         return df_gantt
 
     except FileNotFoundError:
-        st.error(f"Error: The file '{excel_file}' was not found. Please check the file name.")
+        st.error(f"Error: The file '{excel_file}' was not found.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"An error occurred while reading the Excel file: {e}")
         return pd.DataFrame()
 
-# --- 5. Load data ---
 FILE_PATH = 'GANTT_TAI.xlsx' 
 df_processed = load_data(FILE_PATH)
 
-# --- 6. Initialize Session State for View Selector ---
 if 'view_option' not in st.session_state:
-    st.session_state.view_option = 'All' # Default view
+    st.session_state.view_option = 'All'
 if 'chart_key' not in st.session_state:
-    st.session_state.chart_key = 0 # Key to force chart refresh
+    st.session_state.chart_key = 0
 
-# --- 7. Display the application ---
 if not df_processed.empty:
-    
-    # --- 8. Calculate date ranges ---
     project_start_date = df_processed['Start'].min()
-    project_start_month = project_start_date.replace(day=1) 
+    project_start_month = project_start_date.replace(day=1)
     project_end_date = df_processed['Finish'].max()
-    today_date = pd.to_datetime(datetime.today().date()) 
+    today_date = pd.to_datetime(datetime.today().date())
 
-    # --- 9. Display Buttons (Centered and Smaller) ---
-    
     def set_view(view):
-        """Callback for 3M, 1M, 1W buttons"""
         st.session_state.view_option = view
 
     def restart_chart():
-        """Callback for All and Restart buttons to force zoom reset"""
         st.session_state.view_option = 'All'
-        st.session_state.chart_key += 1 # Increment the key to force re-render
+        st.session_state.chart_key += 1
 
-    # Create 7 columns: spacers on the sides, 5 for buttons in the center
     spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([2, 1, 1, 1, 1, 1, 2])
-    
     with col1:
-        st.button("All", on_click=restart_chart, use_container_width=True) # Calls restart_chart
+        st.button("All", on_click=restart_chart, use_container_width=True)
     with col2:
         st.button("3M", on_click=set_view, args=('3M',), use_container_width=True)
     with col3:
@@ -165,107 +114,78 @@ if not df_processed.empty:
     with col4:
         st.button("1W", on_click=set_view, args=('1W',), use_container_width=True)
     with col5:
-        # Restart button also calls restart_chart
         st.button("Restart", on_click=restart_chart, use_container_width=True)
 
-    # Read the current view option from session state
     view_option = st.session_state.view_option
-
-    # --- 10. Create the graph ---
-    # Prepare data for Plotly (dates as strings)
     df_for_gantt = df_processed.copy()
     df_for_gantt['Start'] = df_for_gantt['Start'].dt.strftime('%Y-%m-%d')
     df_for_gantt['Finish'] = df_for_gantt['Finish'].dt.strftime('%Y-%m-%d')
-    
     tasks_list = df_for_gantt.to_dict('records')
 
-    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
-    # Create a STATIC color map that maps exact names to exact colors
-    # Based on the user's image
     color_map = {
-        'Planning & Preparation': 'rgb(0, 117, 220)',        # Blue
-        'Development & Implementation': 'rgb(0, 103, 0)',    # Dark Green
-        'Documentation': 'rgb(146, 0, 192)',                 # Purple
-        'Evaluation & Visual Interface': 'rgb(255, 0, 0)',    # Red
-        'Progress Monitoring & Mentorship': 'rgb(0, 194, 255)',# Light Blue
-        'Bureaucracy & Procurement': 'rgb(255, 128, 0)',     # Orange
-        
-        # Adding fallback colors from the image just in case
-        'Other1': 'rgb(22, 198, 12)',                         # Lime Green
-        'Other2': 'rgb(255, 220, 0)'                          # Yellow
+        'Planning & Preparation': '#009C7C',
+        'Development & Implementation': '#A3D65C',
+        'Documentation': '#4E76E0',
+        'Evaluation & Visual Interface': '#C40C0C',
+        'Progress Monitoring & Mentorship': '#FFCA28',
+        'Bureaucracy & Procurement': '#20C4F4'
     }
-    
-    # Get all unique categories from the data
+
     categories_in_data = df_processed['Resource'].unique()
-    
-    # Ensure any category *not* in our map gets a fallback color
-    # This prevents the app from crashing if a new category is added
-    fallback_colors = ['rgb(128, 128, 128)', 'rgb(22, 198, 12)', 'rgb(255, 220, 0)']
+    fallback_colors = ['#808080', '#A4D65E', '#FFE000']
     color_index = 0
     for cat in categories_in_data:
         if cat not in color_map:
             color_map[cat] = fallback_colors[color_index % len(fallback_colors)]
             color_index += 1
 
-    # Create the figure
     fig = ff.create_gantt(
         tasks_list,
-        colors=color_map,          # Pass the category color dictionary
-        index_col='Resource',      # Group by 'Resource' (Category)
-        show_colorbar=True,      # Show the category legend on the right
-        group_tasks=True,          # This will create the groups
+        colors=color_map,
+        index_col='Resource',
+        show_colorbar=True,
+        group_tasks=True,
         showgrid_x=True,
         showgrid_y=True
     )
 
-    # --- 11. Update layout based on user selection ---
     if view_option == '1W':
-        start_range = today_date - timedelta(days=1) 
-        end_range = today_date + timedelta(days=7) 
+        start_range = today_date - timedelta(days=1)
+        end_range = today_date + timedelta(days=7)
     elif view_option == '1M':
         start_range = today_date - timedelta(days=1)
         end_range = today_date + timedelta(days=30)
     elif view_option == '3M':
         start_range = today_date - timedelta(days=1)
-        end_range = today_date + timedelta(days=90) 
-    else: # 'All' (default)
-        start_range = project_start_month - timedelta(days=7) 
-        end_range = project_end_date + timedelta(days=15) 
+        end_range = today_date + timedelta(days=90)
+    else:
+        start_range = project_start_month - timedelta(days=7)
+        end_range = project_end_date + timedelta(days=15)
 
-    # --- 12. Apply Layout Updates (The Safe Way) ---
-    # This direct assignment avoids the ValueError
-    
     fig.layout.xaxis.title = 'Timeline'
     fig.layout.yaxis.title = 'Tasks (Grouped by Category)'
     fig.layout.height = 800
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
-    fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
+    fig.layout.xaxis.range = [start_range, end_range]
 
-    # --- 13. Add "Today" Line ---
     fig.add_shape(
         type="line",
         x0=today_date, y0=0,
         x1=today_date, y1=1,
-        yref="paper", 
+        yref="paper",
         line=dict(color="Red", width=2, dash="dash")
     )
     fig.add_annotation(
         x=today_date,
-        y=1.05, 
+        y=1.05,
         yref="paper",
         text="Today",
         showarrow=False,
         font=dict(color="Red", family="Open Sans Hebrew, sans-serif")
     )
 
-    # --- 14. Display the graph ---
-    # Pass the key to force component recreation on restart
     chart_key = f"gantt_chart_{st.session_state.chart_key}"
-    
-    # We still keep the config={'displayModeBar': False} as a fallback
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=chart_key)
-
 else:
-    # Message in case the file was loaded but is empty
     st.error("Data loading failed or no valid tasks were found.")
     st.info("Please ensure the Excel file (GANTT_TAI.xlsx) is correct and headers are on row 9.")
