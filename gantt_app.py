@@ -19,12 +19,11 @@ st.markdown("""
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
     
-    /* ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ */
     /* Style all buttons to be smaller */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 35px;     /* הקטנו את הגובה מ-40 */
-        font-size: 13px;  /* הוספנו הקטנה לפונט */
+        height: 15px;     /* הקטנו את הגובה מ-40 */
+        font-size: 6px;  /* הוספנו הקטנה לפונט */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -139,10 +138,9 @@ if not df_processed.empty:
         """Callback function to set the view in session state"""
         st.session_state.view_option = view
 
-    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
     # Create 7 columns: spacers on the sides, 5 for buttons in the center
-    # The ratio [2, 1, 1, 1, 1, 1, 2] makes the buttons narrower
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([2, 1, 1, 1, 1, 1, 2])
+    # The ratio [4, 1, 1, 1, 1, 1, 4] makes the buttons narrower
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([4, 1, 1, 1, 1, 1, 4])
     
     with col1:
         st.button("All", on_click=set_view, args=('All',), use_container_width=True)
