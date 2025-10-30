@@ -4,13 +4,12 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 0. Clear Cache on Every Run ---
-# This forces Streamlit to re-load data functions
 st.cache_data.clear()
 
 # --- 1. Page Configuration (wide layout) ---
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
-# --- 2. Add Open Sans Hebrew font for the entire site ---
+# --- 2. Font Styling ---
 # This CSS applies the font globally
 st.markdown("""
     <style>
@@ -26,8 +25,8 @@ st.markdown("""
 
 def calculate_progress(row, today):
     """
-    Calculates the progress percentage (0-100) based on the user's logic.
-    Example: Task started today, 2 days long = 50%
+    Calculates the progress percentage (0-100).
+    Logic: (days_passed / duration)
     """
     start_date = row['Start']
     duration = row['Duration']
@@ -45,17 +44,17 @@ def calculate_progress(row, today):
     # Cap at 1.0 (100%) and convert to 0-100 scale
     return min(progress, 1.0) * 100
 
-def get_progress_color(p):
+def get_progress_color_name(p):
     """
-    Returns a color string based on the progress percentage.
+    Returns a color string (name) based on the progress percentage.
     """
     if p < 25:
-        return 'red'    # 0-24%
+        return 'Red (0-24%)'
     if p < 50:
-        return 'yellow' # 25-49%
+        return 'Yellow (25-49%)'
     if p < 75:
-        return 'orange' # 50-74%
-    return 'green'      # 75-100%
+        return 'Orange (50-74%)'
+    return 'Green (75-100%)'
 
 # --- 4. Function to load and clean data ---
 @st.cache_data
@@ -71,7 +70,7 @@ def load_data(excel_file):
         df.columns = df.columns.str.strip()
         
         relevant_cols = ['Milestone description', 'Category', 'Start', 'Days']
-        # Check for essential columns (Progress is now calculated)
+        # Check for essential columns
         if not all(col in df.columns for col in relevant_cols):
             st.error("Error: Missing essential columns (Milestone description, Category, Start, Days) in the Excel file.")
             return pd.DataFrame()
@@ -103,11 +102,11 @@ def load_data(excel_file):
         # --- Apply Progress Logic ---
         today = pd.to_datetime(datetime.today().date())
         
-        # Create 'Progress' column (0-100)
+        # Create 'Progress' column (0-100) for the shading
         df_gantt['Progress'] = df_gantt.apply(lambda row: calculate_progress(row, today), axis=1)
         
-        # Create 'Color' column based on progress
-        df_gantt['Color'] = df_gantt['Progress'].apply(get_progress_color)
+        # Create 'Color' column for grouping
+        df_gantt['Color'] = df_gantt['Progress'].apply(get_progress_color_name)
         
         # Append percentage to Task name
         df_gantt['Task'] = df_gantt['Task'] + " (" + df_gantt['Progress'].round(0).astype(int).astype(str) + "%)"
@@ -150,12 +149,22 @@ if not df_processed.empty:
     
     tasks_list = df_for_gantt.to_dict('records')
 
+    # --- THIS IS THE FIX ---
+    # 1. Define the colors we want to use
+    color_map = {
+        'Red (0-24%)': 'red',
+        'Yellow (25-49%)': 'yellow',
+        'Orange (50-74%)': 'orange',
+        'Green (75-100%)': 'green'
+    }
+
+    # 2. Create the figure
     fig = ff.create_gantt(
         tasks_list,
-        colors='Color',           # Use the 'Color' column we created
-        index_col='Resource',     # Group by Category
-        show_colorbar=False,      # Colorbar is not needed now
-        group_tasks=True,
+        colors=color_map,          # Pass the color dictionary
+        index_col='Color',         # Group by the 'Color' column
+        show_colorbar=True,
+        group_tasks=True,          # This will create the groups
         showgrid_x=True,
         showgrid_y=True
     )
@@ -169,7 +178,7 @@ if not df_processed.empty:
         end_range = today_date + timedelta(days=30)
     elif view_option == '3M':
         start_range = today_date - timedelta(days=1)
-        end_range = today_date + timedelta(days=90)
+        end_range = today_date + timedelta(days(90)
     else: # 'All' (default)
         start_range = project_start_month - timedelta(days=7) 
         end_range = project_end_date + timedelta(days=15) 
@@ -178,7 +187,7 @@ if not df_processed.empty:
     # This direct assignment avoids the ValueError
     
     fig.layout.xaxis.title = 'Timeline'
-    fig.layout.yaxis.title = 'Tasks'
+    fig.layout.yaxis.title = 'Tasks (Grouped by Progress)'
     fig.layout.height = 800
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
