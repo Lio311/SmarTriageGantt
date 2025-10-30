@@ -148,6 +148,9 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
+    # Hide the rangeselector completely
+    fig.update_xaxes(rangeselector=dict(visible=False))
+
     if view_option == '1W':
         start_range = today_date - timedelta(days=1)
         end_range = today_date + timedelta(days=7)
