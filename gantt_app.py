@@ -4,7 +4,7 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration (wide layout) ---
-st.set_page_config(layout="wide") # Removed page_title to prevent any leaking small title (uncomment if needed: page_title="Gantt Chart")
+st.set_page_config(layout="wide", page_title="SmarTriage Gantt")
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
 st.markdown("""
@@ -81,6 +81,11 @@ def load_data(excel_file):
             'Days': 'Duration'
         })
 
+        # --- התיקון כאן ---
+        # ממלא קטגוריות חסרות כדי למנוע שגיאת "undefined"
+        df_gantt['Resource'] = df_gantt['Resource'].fillna('Uncategorized')
+        # ---------------------
+
         df_gantt['Start'] = pd.to_datetime(df_gantt['Start_Date_Obj'])
         df_gantt['Duration'] = pd.to_numeric(df_gantt['Duration'])
         df_gantt['Finish'] = df_gantt.apply(lambda row: row['Start'] + timedelta(days=row['Duration']), axis=1)
@@ -144,7 +149,8 @@ if not df_processed.empty:
         'Documentation': '#4E76E0',
         'Evaluation & Visual Interface': '#C40C0C',
         'Progress Monitoring & Mentorship': '#FFCA28',
-        'Bureaucracy & Procurement': '#20C4F4'
+        'Bureaucracy & Procurement': '#20C4F4',
+        'Uncategorized': '#808080' # הוספת צבע לקטגוריה החסרה
     }
 
     categories_in_data = df_processed['Resource'].unique()
