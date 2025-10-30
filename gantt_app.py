@@ -133,7 +133,9 @@ if not df_processed.empty:
     )
 
     # --- 11. Update Figure Layout (THE FIX) ---
-    # We assign properties directly to fig.layout to avoid the ValueError
+    # This is the correct, safe way. It does NOT use fig.update_layout()
+    # It assigns properties directly to the layout object.
+    
     fig.layout.yaxis.title = 'Tasks'
     fig.layout.xaxis.title = 'Timeline'
     fig.layout.height = 800
