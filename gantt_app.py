@@ -171,9 +171,6 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # NEW: Remove any main title from the graph (to hide the small "Gantt Chart")
-    fig.update_layout(title=None)
-
     # Hide the rangeselector completely
     fig.update_xaxes(rangeselector=dict(visible=False))
 
