@@ -172,7 +172,7 @@ if not df_processed.empty:
     )
     
     # Hide the title
-    fig.update_layout(title_visible=False)
+    fig.update_layout(title="")
 
     # Hide the rangeselector completely
     fig.update_xaxes(rangeselector=dict(visible=False))
