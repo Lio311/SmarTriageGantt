@@ -20,8 +20,8 @@ st.markdown("""
     }
     /* Style all buttons to be full-width *within their column* */
     div[data-testid="stButton"] > button {
-        width: 100%;
-        height: 20px; 
+        width: 50%;
+        height: 10px; 
     }
     </style>
     """, unsafe_allow_html=True)
