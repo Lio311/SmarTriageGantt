@@ -207,7 +207,7 @@ if not df_processed.empty:
     
     fig.layout.xaxis.title = 'Timeline'
     fig.layout.yaxis.title = 'Tasks (Grouped by Category)'
-    fig.layout.height = 800
+    fig.layout.height = 300
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
 
