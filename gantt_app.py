@@ -4,7 +4,7 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration (wide layout) ---
-st.set_page_config(layout="wide")  # Removed page_title to prevent any leaking small title (uncomment if needed: page_title="Gantt Chart")
+st.set_page_config(layout="wide") # Removed page_title to prevent any leaking small title (uncomment if needed: page_title="Gantt Chart")
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
 st.markdown("""
@@ -20,7 +20,7 @@ st.markdown("""
     /* Updated button styles: Smaller font, closer buttons */
     div[data-testid="stButton"] > button {
         width: 60px;  /* Fixed width for smaller buttons */
-        height: 25px;  /* Reduced height */
+        height: 25px; /* Reduced height */
         font-size: 8px;  /* Even smaller font */
         padding: 0px;  /* Remove padding */
         min-width: auto;  /* Allow smaller width */
@@ -44,8 +44,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- NEW: Enlarged Title ---
-st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
+# --- NEW: Enlarged Title (CHANGED) ---
+st.markdown("<h1 style='text-align: center; font-size: 40px;'>SmarTriage Gantt</h1>", unsafe_allow_html=True)
 
 def calculate_progress(row, today):
     start_date = row['Start']
