@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="לוח גאנט", layout="wide")
 
 # 2. Add Open Sans Hebrew font for the entire site
-# This is a CSS "hack" that changes the font for all Streamlit elements
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
@@ -51,7 +50,7 @@ def load_data(excel_file):
         df_gantt['Start'] = pd.to_datetime(df_gantt['Start_Date_Obj'])
         df_gantt['Duration'] = pd.to_numeric(df_gantt['Duration'])
         
-        # Calculate finish date (here we leave it as a date object)
+        # Calculate finish date
         df_gantt['Finish'] = df_gantt.apply(
             lambda row: row['Start'] + timedelta(days=row['Duration']), 
             axis=1
@@ -67,18 +66,17 @@ def load_data(excel_file):
         return pd.DataFrame()
 
 # 4. Load data
-FILE_PATH = 'GANTT_TAI.xlsx' # File name updated
+FILE_PATH = 'GANTT_TAI.xlsx' 
 df_processed = load_data(FILE_PATH)
 
-# 5. Display the application (without main title)
-
+# 5. Display the application
 if not df_processed.empty:
     
     # 6. Calculate date ranges
     project_start_date = df_processed['Start'].min()
-    project_start_month = project_start_date.replace(day=1) # First month of the project
+    project_start_month = project_start_date.replace(day=1) 
     project_end_date = df_processed['Finish'].max()
-    today_date = pd.to_datetime(datetime.today().date()) # Today's date
+    today_date = pd.to_datetime(datetime.today().date()) 
 
     # 7. New display range selector
     view_option = st.radio(
@@ -89,15 +87,12 @@ if not df_processed.empty:
     )
 
     # 8. Create the graph
-    
-    # The create_gantt function requires dates as text (string)
     df_for_gantt = df_processed.copy()
     df_for_gantt['Start'] = df_for_gantt['Start'].dt.strftime('%Y-%m-%d')
     df_for_gantt['Finish'] = df_for_gantt['Finish'].dt.strftime('%Y-%m-%d')
     
     tasks_list = df_for_gantt.to_dict('records')
     
-    # Define colors
     categories = df_processed['Resource'].unique()
     custom_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA', '#F08A5D', '#B2CC83', '#6E5773']
     color_map = {cat: color for cat, color in zip(categories, custom_colors)}
@@ -113,11 +108,9 @@ if not df_processed.empty:
     )
 
     # 9. Update layout based on user selection
-    
-    # Define the dynamic display range
     if view_option == 'שבוע':
-        start_range = today_date - timedelta(days=1) # Starts one day before today
-        end_range = today_date + timedelta(days=7) # And displays 7 days forward
+        start_range = today_date - timedelta(days=1) 
+        end_range = today_date + timedelta(days=7) 
     elif view_option == 'חודש':
         start_range = today_date - timedelta(days=1)
         end_range = today_date + timedelta(days=30)
@@ -125,30 +118,30 @@ if not df_processed.empty:
         start_range = today_date - timedelta(days=1)
         end_range = today_date + timedelta(days=90)
     else: # 'All' (default)
-        start_range = project_start_month - timedelta(days=7) # Starts one week before the beginning of the month
-        end_range = project_end_date + timedelta(days=15) # We'll add some "padding" at the end of the graph
+        start_range = project_start_month - timedelta(days=7) 
+        end_range = project_end_date + timedelta(days=15) 
 
     # --- THIS IS THE FIX ---
-    # The fig.update_layout() command caused the ValueError crash.
-    # This direct assignment method avoids the crash.
+    # We assign properties directly to fig.layout to avoid the ValueError
+    # This block REPLACES the fig.update_layout() command
     
     fig.layout.xaxis.title = 'ציר זמן'
     fig.layout.yaxis.title = 'משימות'
     fig.layout.height = 800
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
-    fig.layout.xaxis.range = [start_range, end_range] # The command that sets the X axis range
+    fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
 
     # 10. Add "Today" Line
     fig.add_shape(
         type="line",
         x0=today_date, y0=0,
         x1=today_date, y1=1,
-        yref="paper", # The line stretches from bottom (0) to top (1)
+        yref="paper", 
         line=dict(color="Red", width=2, dash="dash")
     )
     fig.add_annotation(
         x=today_date,
-        y=1.05, # Positioned slightly above the graph
+        y=1.05, 
         yref="paper",
         text="היום",
         showarrow=False,
@@ -157,8 +150,6 @@ if not df_processed.empty:
 
     # 11. Display the graph
     st.plotly_chart(fig, use_container_width=True)
-    
-    # The st.expander that showed the table was removed
 
 else:
     # Message in case the file was loaded but is empty
