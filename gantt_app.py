@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.figure_factory as ff
-from datetime import datetime, timedelta  # <-- ⭐️⭐️⭐️ התיקון לשגיאת ה-NameError ⭐️⭐️⭐️
+from datetime import datetime, timedelta
 
 # --- 0. Clear Cache on Every Run ---
 st.cache_data.clear()
@@ -174,12 +174,14 @@ if not df_processed.empty:
     
     tasks_list = df_for_gantt.to_dict('records')
 
-    # Define the colors for the groups
+    # --- THIS IS THE FIX ---
+    # We must use explicit RGB strings instead of simple names like 'red'
+    # to avoid the TypeError in Plotly's color parser.
     color_map = {
-        'Red (0-24%)': 'red',
-        'Yellow (25-49%)': 'yellow',
-        'Orange (50-74%)': 'orange',
-        'Green (75-100%)': 'green'
+        'Red (0-24%)': 'rgb(239, 83, 80)',      # Red
+        'Yellow (25-49%)': 'rgb(255, 241, 118)', # Yellow
+        'Orange (50-74%)': 'rgb(255, 167, 38)', # Orange
+        'Green (75-100%)': 'rgb(102, 187, 106)' # Green
     }
 
     # Create the figure
