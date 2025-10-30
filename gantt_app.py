@@ -18,7 +18,7 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
-    /* Style all buttons to be full-width */
+    /* Style all buttons to be full-width *within their column* */
     div[data-testid="stButton"] > button {
         width: 100%;
         height: 40px; 
@@ -130,24 +130,26 @@ if not df_processed.empty:
     project_end_date = df_processed['Finish'].max()
     today_date = pd.to_datetime(datetime.today().date()) 
 
-    # --- 9. Display Buttons (Replaces Radio Buttons) ---
+    # --- 9. Display Buttons (Centered) ---
     
     def set_view(view):
         """Callback function to set the view in session state"""
         st.session_state.view_option = view
 
-    # Create 5 columns for the 5 buttons
-    cols = st.columns(5)
+    # --- THIS IS THE CHANGE ---
+    # Create 7 columns: spacers on the sides, 5 for buttons in the center
+    # The ratio [1.5, 1, 1, 1, 1, 1, 1.5] centers the buttons
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([1.5, 1, 1, 1, 1, 1, 1.5])
     
-    with cols[0]:
+    with col1:
         st.button("All", on_click=set_view, args=('All',), use_container_width=True)
-    with cols[1]:
+    with col2:
         st.button("3M", on_click=set_view, args=('3M',), use_container_width=True)
-    with cols[2]:
+    with col3:
         st.button("1M", on_click=set_view, args=('1M',), use_container_width=True)
-    with cols[3]:
+    with col4:
         st.button("1W", on_click=set_view, args=('1W',), use_container_width=True)
-    with cols[4]:
+    with col5:
         # Restart button also sets the view to 'All'
         st.button("Restart", on_click=set_view, args=('All',), use_container_width=True)
 
@@ -162,8 +164,7 @@ if not df_processed.empty:
     
     tasks_list = df_for_gantt.to_dict('records')
 
-    # --- THIS IS THE FIX ---
-    # 1. Define distinct colors for each CATEGORY
+    # Define distinct colors for each CATEGORY
     categories = df_processed['Resource'].unique()
     # Using a predefined list of distinct colors
     color_palette = [
@@ -176,7 +177,7 @@ if not df_processed.empty:
     # Create the color map {CategoryName: color}
     color_map = {cat: color_palette[i % len(color_palette)] for i, cat in enumerate(categories)}
 
-    # 2. Create the figure
+    # Create the figure
     fig = ff.create_gantt(
         tasks_list,
         colors=color_map,          # Pass the category color dictionary
