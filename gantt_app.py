@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.figure_factory as ff
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta  # <-- ⭐️⭐️⭐️ התיקון לשגיאת ה-NameError ⭐️⭐️⭐️
 
 # --- 0. Clear Cache on Every Run ---
 st.cache_data.clear()
@@ -18,11 +18,10 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
-    /* Style the restart button */
+    /* Style all buttons to be full-width */
     div[data-testid="stButton"] > button {
         width: 100%;
-        height: 40px; /* Match radio button height */
-        margin-top: 28px; /* Align with radio buttons */
+        height: 40px; 
     }
     </style>
     """, unsafe_allow_html=True)
@@ -131,8 +130,8 @@ FILE_PATH = 'GANTT_TAI.xlsx'
 df_processed = load_data(FILE_PATH)
 
 # --- 6. Initialize Session State for View Selector ---
-if 'view_selector' not in st.session_state:
-    st.session_state.view_selector = 'All'
+if 'view_option' not in st.session_state:
+    st.session_state.view_option = 'All' # Default view
 
 # --- 7. Display the application ---
 if not df_processed.empty:
@@ -143,30 +142,29 @@ if not df_processed.empty:
     project_end_date = df_processed['Finish'].max()
     today_date = pd.to_datetime(datetime.today().date()) 
 
-    # --- 9. Display range selector and Restart Button ---
+    # --- 9. Display Buttons (Replaces Radio Buttons) ---
     
-    def reset_view():
-        """Callback function to reset the view to 'All'"""
-        st.session_state.view_selector = 'All'
+    def set_view(view):
+        """Callback function to set the view in session state"""
+        st.session_state.view_option = view
 
-    # Create columns for layout
-    col1, col2 = st.columns([0.8, 0.2]) # 80% for radio, 20% for button
-
-    with col1:
-        # Radio button uses session state to store its value
-        st.radio(
-            "Select Timeline View:",
-            ('All', '3M', '1M', '1W'), # The options
-            key='view_selector',      # Link to session state key
-            horizontal=True,          # Displays the buttons in one line
-        )
+    # Create 5 columns for the 5 buttons
+    cols = st.columns(5)
     
-    with col2:
-        # Restart button - triggers the callback
-        st.button("Restart", on_click=reset_view, use_container_width=True)
+    with cols[0]:
+        st.button("All", on_click=set_view, args=('All',), use_container_width=True)
+    with cols[1]:
+        st.button("3M", on_click=set_view, args=('3M',), use_container_width=True)
+    with cols[2]:
+        st.button("1M", on_click=set_view, args=('1M',), use_container_width=True)
+    with cols[3]:
+        st.button("1W", on_click=set_view, args=('1W',), use_container_width=True)
+    with cols[4]:
+        # Restart button also sets the view to 'All'
+        st.button("Restart", on_click=set_view, args=('All',), use_container_width=True)
 
     # Read the current view option from session state
-    view_option = st.session_state.view_selector
+    view_option = st.session_state.view_option
 
     # --- 10. Create the graph ---
     # Prepare data for Plotly (dates as strings)
@@ -204,7 +202,7 @@ if not df_processed.empty:
         end_range = today_date + timedelta(days=30)
     elif view_option == '3M':
         start_range = today_date - timedelta(days=1)
-        end_range = today_date + timedelta(days=90) # Fixed typo
+        end_range = today_date + timedelta(days=90) 
     else: # 'All' (default)
         start_range = project_start_month - timedelta(days=7) 
         end_range = project_end_date + timedelta(days=15) 
