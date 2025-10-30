@@ -138,8 +138,8 @@ if not df_processed.empty:
 
     # --- THIS IS THE CHANGE ---
     # Create 7 columns: spacers on the sides, 5 for buttons in the center
-    # The ratio [4.5, 1, 1, 1, 1, 1, 4.5] centers the buttons
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([1.5, 1, 1, 1, 1, 1, 1.5])
+    # The ratio [10, 1, 1, 1, 1, 1, 10] centers the buttons
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([5, 1, 1, 1, 1, 1, 5])
     
     with col1:
         st.button("All", on_click=set_view, args=('All',), use_container_width=True)
