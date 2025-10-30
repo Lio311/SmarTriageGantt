@@ -13,7 +13,7 @@ st.set_page_config(page_title="Gantt Chart", layout="wide")
 # This CSS applies the font globally AND hides the Plotly modebar
 st.markdown("""
     <style>
-    /* --- ⭐️ ⭐️ ⭐️ CACHE BUSTER V101 ⭐️ ⭐️ ⭐️ --- */
+    /* --- CACHE BUSTER V102 --- */
     /* (This comment is to force Streamlit Cloud to reload the CSS) */
 
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans+Hebrew:wght@300..800&display=swap');
@@ -179,14 +179,20 @@ if not df_processed.empty:
     
     tasks_list = df_for_gantt.to_dict('records')
 
-    # Define distinct colors for each CATEGORY
+    # --- ⭐️ ⭐️ ⭐️ התיקון כאן ⭐️ ⭐️ ⭐️ ---
+    # Define distinct colors for each CATEGORY based on user image
     categories = df_processed['Resource'].unique()
-    # Using a predefined list of distinct colors
+    
+    # New color palette based on the image
     color_palette = [
-        'rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 
-        'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 
-        'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 
-        'rgb(23, 190, 207)'
+        'rgb(0, 117, 220)',   # Blue
+        'rgb(22, 198, 12)',   # Green
+        'rgb(146, 0, 192)',   # Purple
+        'rgb(255, 0, 149)',   # Pink
+        'rgb(0, 194, 255)',   # Light Blue
+        'rgb(255, 128, 0)',   # Orange
+        'rgb(255, 220, 0)',   # Yellow
+        'rgb(128, 128, 128)'  # Grey
     ]
     
     # Create the color map {CategoryName: color}
