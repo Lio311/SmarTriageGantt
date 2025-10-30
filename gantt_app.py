@@ -4,6 +4,7 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration ---
+# Set the page to wide layout
 st.set_page_config(page_title="Gantt Chart", layout="wide")
 
 # --- 2. Font Styling ---
@@ -25,33 +26,41 @@ def load_data(excel_file):
     Loads and processes data from the specified Excel file.
     """
     try:
+        # Read the Excel file, assuming row 9 (index 8) is the header
         df = pd.read_excel(excel_file, header=8, engine='openpyxl')
         
+        # Clean up data
         df = df.dropna(how='all').dropna(axis=1, how='all')
         df.columns = df.columns.str.strip()
         
+        # Check for essential columns
         relevant_cols = ['Milestone description', 'Category', 'Start', 'Days', 'Progress']
         if not all(col in df.columns for col in relevant_cols):
             st.error("Error: Missing essential columns (Milestone description, Category, Start, Days, Progress) in the Excel file.")
             return pd.DataFrame()
             
         df = df[relevant_cols]
+        
+        # Drop rows without a start date or duration
         df = df.dropna(subset=['Start', 'Days'])
         
         if df.empty:
             st.warning("No tasks with valid Start date and Days duration found in the file.")
             return pd.DataFrame()
 
+        # Rename columns for Plotly Gantt chart
         df_gantt = df.rename(columns={
             'Milestone description': 'Task',
-            'Start': 'Start_Date_Obj',
+            'Start': 'Start_Date_Obj', # Rename to avoid confusion
             'Category': 'Resource', 
             'Days': 'Duration'
         })
 
+        # Convert data types
         df_gantt['Start'] = pd.to_datetime(df_gantt['Start_Date_Obj'])
         df_gantt['Duration'] = pd.to_numeric(df_gantt['Duration'])
         
+        # Calculate the finish date
         df_gantt['Finish'] = df_gantt.apply(
             lambda row: row['Start'] + timedelta(days=row['Duration']), 
             axis=1
@@ -79,8 +88,7 @@ if not df_processed.empty:
     project_start_month = project_start_date.replace(day=1) # First day of the project's start month
     project_end_date = df_processed['Finish'].max()
 
-    # --- 7. Add Streamlit View Selector (The Button Bar) ---
-    # This replaces the Plotly rangeselector
+    # --- 7. Add Streamlit View Selector (The Top Button Bar) ---
     view_option = st.radio(
         "Select Timeline View:",
         ('All', '3 Months', 'Month', 'Week'), # Options
@@ -124,16 +132,15 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # --- 11. Update Figure Layout (Simplified) ---
-    # This is now safe as we removed the conflicting rangeselector
-    fig.update_layout(
-        yaxis_title='Tasks',
-        xaxis_title='Timeline',
-        height=800,
-        font=dict(family="Open Sans Hebrew, sans-serif", size=12),
-        # Apply the dynamic date range from the st.radio buttons
-        xaxis_range=[start_range, end_range]
-    )
+    # --- 11. Update Figure Layout (THE FIX) ---
+    # We assign properties directly to fig.layout to avoid the ValueError
+    fig.layout.yaxis.title = 'Tasks'
+    fig.layout.xaxis.title = 'Timeline'
+    fig.layout.height = 800
+    fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
+    
+    # Set the xaxis range directly
+    fig.layout.xaxis.range = [start_range, end_range]
 
     # --- 12. Add "Today" Line ---
     fig.add_shape(
@@ -157,5 +164,6 @@ if not df_processed.empty:
     st.plotly_chart(fig, use_container_width=True)
 
 else:
+    # This message shows if data loading failed or returned empty
     st.error("Data could not be loaded or no valid tasks were found.")
     st.info("Please ensure the Excel file (GANTT_TAI.xlsx) is correct and headers are on row 9.")
