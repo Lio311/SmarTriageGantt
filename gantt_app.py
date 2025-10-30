@@ -170,6 +170,9 @@ if not df_processed.empty:
         showgrid_x=True,
         showgrid_y=True
     )
+    
+    # Hide the title
+    fig.update_layout(title_visible=False)
 
     # Hide the rangeselector completely
     fig.update_xaxes(rangeselector=dict(visible=False))
