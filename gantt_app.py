@@ -18,6 +18,12 @@ st.markdown("""
     html, body, [class*="st-"], [class*="css-"] {
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
+    /* Style the restart button */
+    div[data-testid="stButton"] > button {
+        width: 100%;
+        height: 40px; /* Match radio button height */
+        margin-top: 28px; /* Align with radio buttons */
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -124,24 +130,45 @@ def load_data(excel_file):
 FILE_PATH = 'GANTT_TAI.xlsx' 
 df_processed = load_data(FILE_PATH)
 
-# --- 6. Display the application ---
+# --- 6. Initialize Session State for View Selector ---
+if 'view_selector' not in st.session_state:
+    st.session_state.view_selector = 'All'
+
+# --- 7. Display the application ---
 if not df_processed.empty:
     
-    # --- 7. Calculate date ranges ---
+    # --- 8. Calculate date ranges ---
     project_start_date = df_processed['Start'].min()
     project_start_month = project_start_date.replace(day=1) 
     project_end_date = df_processed['Finish'].max()
     today_date = pd.to_datetime(datetime.today().date()) 
 
-    # --- 8. Display range selector (English) ---
-    view_option = st.radio(
-        "Select Timeline View:",
-        ('All', '3M', '1M', '1W'), # The options
-        index=0, # Default is "All"
-        horizontal=True, # Displays the buttons in one line
-    )
+    # --- 9. Display range selector and Restart Button ---
+    
+    def reset_view():
+        """Callback function to reset the view to 'All'"""
+        st.session_state.view_selector = 'All'
 
-    # --- 9. Create the graph ---
+    # Create columns for layout
+    col1, col2 = st.columns([0.8, 0.2]) # 80% for radio, 20% for button
+
+    with col1:
+        # Radio button uses session state to store its value
+        st.radio(
+            "Select Timeline View:",
+            ('All', '3M', '1M', '1W'), # The options
+            key='view_selector',      # Link to session state key
+            horizontal=True,          # Displays the buttons in one line
+        )
+    
+    with col2:
+        # Restart button - triggers the callback
+        st.button("Restart", on_click=reset_view, use_container_width=True)
+
+    # Read the current view option from session state
+    view_option = st.session_state.view_selector
+
+    # --- 10. Create the graph ---
     # Prepare data for Plotly (dates as strings)
     df_for_gantt = df_processed.copy()
     df_for_gantt['Start'] = df_for_gantt['Start'].dt.strftime('%Y-%m-%d')
@@ -149,8 +176,7 @@ if not df_processed.empty:
     
     tasks_list = df_for_gantt.to_dict('records')
 
-    # --- THIS IS THE FIX ---
-    # 1. Define the colors we want to use
+    # Define the colors for the groups
     color_map = {
         'Red (0-24%)': 'red',
         'Yellow (25-49%)': 'yellow',
@@ -158,7 +184,7 @@ if not df_processed.empty:
         'Green (75-100%)': 'green'
     }
 
-    # 2. Create the figure
+    # Create the figure
     fig = ff.create_gantt(
         tasks_list,
         colors=color_map,          # Pass the color dictionary
@@ -169,7 +195,7 @@ if not df_processed.empty:
         showgrid_y=True
     )
 
-    # --- 10. Update layout based on user selection ---
+    # --- 11. Update layout based on user selection ---
     if view_option == '1W':
         start_range = today_date - timedelta(days=1) 
         end_range = today_date + timedelta(days=7) 
@@ -178,12 +204,12 @@ if not df_processed.empty:
         end_range = today_date + timedelta(days=30)
     elif view_option == '3M':
         start_range = today_date - timedelta(days=1)
-        end_range = today_date + timedelta(days(90)
+        end_range = today_date + timedelta(days=90) # Fixed typo
     else: # 'All' (default)
         start_range = project_start_month - timedelta(days=7) 
         end_range = project_end_date + timedelta(days=15) 
 
-    # --- 11. Apply Layout Updates (The Safe Way) ---
+    # --- 12. Apply Layout Updates (The Safe Way) ---
     # This direct assignment avoids the ValueError
     
     fig.layout.xaxis.title = 'Timeline'
@@ -192,7 +218,7 @@ if not df_processed.empty:
     fig.layout.font = dict(family="Open Sans Hebrew, sans-serif", size=12)
     fig.layout.xaxis.range = [start_range, end_range] # Set the X-axis range
 
-    # --- 12. Add "Today" Line ---
+    # --- 13. Add "Today" Line ---
     fig.add_shape(
         type="line",
         x0=today_date, y0=0,
@@ -209,7 +235,7 @@ if not df_processed.empty:
         font=dict(color="Red", family="Open Sans Hebrew, sans-serif")
     )
 
-    # --- 13. Display the graph ---
+    # --- 14. Display the graph ---
     # config={'displayModeBar': False} hides the Plotly toolbar
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
