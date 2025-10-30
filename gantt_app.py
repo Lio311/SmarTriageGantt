@@ -4,7 +4,7 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration (wide layout) ---
-st.set_page_config(page_title="Gantt Chart", layout="wide")  # Comment out if the small title persists: # st.set_page_config(layout="wide") to remove title
+st.set_page_config(layout="wide")  # Removed page_title to prevent any leaking small title (uncomment if needed: page_title="Gantt Chart")
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
 st.markdown("""
@@ -37,14 +37,14 @@ st.markdown("""
         display: none !important;
     }
     
-    /* NEW: Hide small titles or extra text (like the small "Gantt Chart") */
+    /* Hide small titles or extra text (like the small "Gantt Chart") */
     small, .stApp > header, [class*="stMarkdown"] small {
         display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- NEW: Enlarged Title (keep this for the big one) ---
+# --- NEW: Enlarged Title ---
 st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
 
 def calculate_progress(row, today):
@@ -164,6 +164,9 @@ if not df_processed.empty:
         showgrid_x=True,
         showgrid_y=True
     )
+
+    # NEW: Remove any main title from the graph (to hide the small "Gantt Chart")
+    fig.update_layout(title=None)
 
     # Hide the rangeselector completely
     fig.update_xaxes(rangeselector=dict(visible=False))
