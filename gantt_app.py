@@ -4,7 +4,7 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration (wide layout) ---
-st.set_page_config(page_title="Gantt Chart", layout="wide")
+st.set_page_config(page_title="Gantt Chart", layout="wide")  # Comment out if the small title persists: # st.set_page_config(layout="wide") to remove title
 
 # --- 2. Font Styling (and Modebar Hide Fix) ---
 st.markdown("""
@@ -17,13 +17,14 @@ st.markdown("""
         font-family: 'Open Sans Hebrew', sans-serif !important;
     }
     
-    /* Updated button styles: Smaller buttons */
+    /* Updated button styles: Smaller font, closer buttons */
     div[data-testid="stButton"] > button {
         width: 60px;  /* Fixed width for smaller buttons */
         height: 25px;  /* Reduced height */
-        font-size: 10px;  /* Smaller font */
-        padding: 0px;  /* Remove padding if needed */
+        font-size: 8px;  /* Even smaller font */
+        padding: 0px;  /* Remove padding */
         min-width: auto;  /* Allow smaller width */
+        margin: 0 1px;  /* Almost touching (1px gap) */
     }
     
     /* --- תיקון CSS להסתרת סרגל הכלים --- */
@@ -35,10 +36,15 @@ st.markdown("""
     .plotly .rangeselector {
         display: none !important;
     }
+    
+    /* NEW: Hide small titles or extra text (like the small "Gantt Chart") */
+    small, .stApp > header, [class*="stMarkdown"] small {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- NEW: Enlarged Title ---
+# --- NEW: Enlarged Title (keep this for the big one) ---
 st.markdown("<h1 style='text-align: center; font-size: 40px;'>Gantt Chart</h1>", unsafe_allow_html=True)
 
 def calculate_progress(row, today):
@@ -113,8 +119,8 @@ if not df_processed.empty:
         st.session_state.view_option = 'All'
         st.session_state.chart_key += 1
 
-    # Updated columns: Make button columns narrower (0.7 instead of 1)
-    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([3, 0.7, 0.7, 0.7, 0.7, 0.7, 3])
+    # Updated columns: Smaller button columns for closer placement
+    spacer1, col1, col2, col3, col4, col5, spacer2 = st.columns([4, 0.5, 0.5, 0.5, 0.5, 0.5, 4])
     with col1:
         st.button("All", on_click=restart_chart, use_container_width=True)
     with col2:
