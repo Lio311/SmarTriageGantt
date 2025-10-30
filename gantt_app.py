@@ -189,7 +189,7 @@ if not df_processed.empty:
         tasks_list,
         colors=color_map,          # Pass the color dictionary
         index_col='Color',         # Group by the 'Color' column
-        show_colorbar=True,
+        show_colorbar=True,      # ⭐️ This shows the legend on the right ⭐️
         group_tasks=True,          # This will create the groups
         showgrid_x=True,
         showgrid_y=True
