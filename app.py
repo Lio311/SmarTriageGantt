@@ -4,7 +4,14 @@ import plotly.figure_factory as ff
 from datetime import datetime, timedelta
 
 # --- 1. Page Configuration ---
-st.set_page_config(layout="wide", page_title="SmarTriage Gantt")
+import streamlit as st
+
+st.set_page_config(
+    layout="wide",
+    page_title="SmarTriage Gantt",
+    page_icon="📊" 
+)
+
 
 # --- 2. Custom CSS Injection ---
 st.markdown("""
