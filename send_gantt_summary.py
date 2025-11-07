@@ -6,8 +6,12 @@ from email.mime.text import MIMEText
 import os
 
 # --- 1. Configuration ---
-# ודא ששם הקובץ הזה תואם בדיוק לשם הקובץ בריפוזיטורי שלך
-FILE_NAME = "GANTT TAI.xlsx" 
+#
+# --- !!! התיקון כאן !!! ---
+# השתמשנו בשם הקובץ הנכון עם קו תחתון (במקום רווח)
+# והסרנו תו נסתר שהיה בסוף השורה
+FILE_NAME = "GANTT_TAI.xlsx"
+# ---
 
 # --- 2. Date Configuration ---
 TODAY = pd.to_datetime(datetime.today().date())
@@ -37,7 +41,6 @@ def create_task_report():
     """Loads data, filters tasks, and generates an HTML report."""
     try:
         # ---
-        # !!! השינוי המרכזי כאן !!!
         # קוראים קובץ אקסל במקום CSV, ומשתמשים בספריית openpyxl
         df = pd.read_excel(FILE_NAME, header=8, engine='openpyxl')
         # ---
