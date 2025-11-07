@@ -7,9 +7,11 @@ import os
 
 # --- 1. Configuration ---
 # The filename must exactly match the file in your GitHub repository.
+# Note: The file name was corrected from "GANTT TAI.xlsx" to "GANTT_TAI.xlsx".
 FILE_NAME = "GANTT_TAI.xlsx"
 
 # --- 2. Date Configuration ---
+# TODAY is dynamically set to the current date when the script runs (e.g., on GitHub Actions).
 TODAY = pd.to_datetime(datetime.today().date())
 
 # --- 3. Helper Function to Format Tasks ---
@@ -22,6 +24,7 @@ def format_tasks_to_html(tasks_df, title):
     html += "<table>"
     html += "<tr><th>Task</th><th>Start Date</th><th>End Date</th></tr>"
     
+    # Sort tasks by start date
     tasks_df = tasks_df.sort_values(by='Start')
     
     for _, row in tasks_df.iterrows():
@@ -36,8 +39,10 @@ def create_task_report():
     """Loads data, filters tasks, and generates an HTML report."""
     try:
         # Read the Excel file using openpyxl, skipping the first 8 rows (header is on row 9)
+        # This fixes the issue where the script was incorrectly trying to read a CSV.
         df = pd.read_excel(FILE_NAME, header=8, engine='openpyxl')
         
+        # Clean up the DataFrame
         df = df.dropna(how='all').dropna(axis=1, how='all')
         df.columns = df.columns.str.strip()
         
@@ -58,6 +63,7 @@ def create_task_report():
         df['Finish'] = df.apply(lambda row: row['Start'] + timedelta(days=max(0, row['Days'] - 1)), axis=1)
 
         # --- Task Filtering ---
+        # Calculate start/end of the current week (Sunday to Saturday)
         start_of_week = TODAY - pd.to_timedelta(TODAY.dayofweek, unit='d')
         end_of_week = start_of_week + pd.to_timedelta(6, unit='d')
 
@@ -115,7 +121,7 @@ def send_email(html_content):
         print("Error: Missing environment variables (GMAIL_USER, GMAIL_PASS, or RECIPIENT_EMAIL).")
         return
 
-    # Split the string into a list of emails
+    # Split the string into a list of emails, ensuring empty strings are ignored
     RECIPIENT_EMAILS = [email.strip() for email in RECIPIENT_EMAIL_STRING.split(',') if email.strip()]
     
     if not RECIPIENT_EMAILS:
@@ -128,7 +134,7 @@ def send_email(html_content):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = f"Gantt Task Summary - {TODAY.strftime('%Y-%m-%d')}"
     msg['From'] = SENDER_EMAIL
-    # Set the 'To' field in the email header
+    # Set the 'To' field in the email header using comma-separated string
     msg['To'] = ", ".join(RECIPIENT_EMAILS)
     
     msg.attach(MIMEText(html_content, 'html', 'utf-8'))
@@ -146,6 +152,7 @@ def send_email(html_content):
         print(f"Email sent successfully to: {RECIPIENT_EMAILS}!")
         server.quit()
     except Exception as e:
+        # This typically indicates an issue with GMAIL_PASS (needs to be an App Password)
         print(f"Error sending email: {e}")
 
 # --- 6. Main execution ---
