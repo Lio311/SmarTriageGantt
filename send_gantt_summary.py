@@ -3,26 +3,23 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os # ייבוא חדש - קריטי לקריאת Secrets
+import os
 
 # --- 1. Configuration ---
-FILE_NAME = "GANTT TAI.xlsx"
+# ודא ששם הקובץ הזה תואם בדיוק לשם הקובץ בריפוזיטורי שלך
+FILE_NAME = "GANTT TAI.xlsx" 
 
-# ---
-# קביעת התאריך של "היום"
-# ---
-# שינוי קריטי: אנחנו עוברים להשתמש בתאריך הנוכחי האמיתי
+# --- 2. Date Configuration ---
 TODAY = pd.to_datetime(datetime.today().date())
-# TODAY = pd.to_datetime('2026-06-01') # (נשאר בהערה למקרה שתרצה לבדוק)
-# ---
+# TODAY = pd.to_datetime('2026-06-01') # For testing with future data
 
-# --- 2. Helper Function to Format Tasks ---
+# --- 3. Helper Function to Format Tasks ---
 def format_tasks_to_html(tasks_df, title):
     """Formats a DataFrame of tasks into an HTML table."""
     if tasks_df.empty:
         return f"<h2>{title}</h2><p>No tasks found for this period.</p>"
     
-    html = "<h2>{title}</h2>"
+    html = f"<h2>{title}</h2>" # תיקון טעות קטנה: F-string חסר
     html += "<table>"
     html += "<tr><th>Task</th><th>Start Date</th><th>End Date</th></tr>"
     
@@ -35,11 +32,15 @@ def format_tasks_to_html(tasks_df, title):
     html += "</table>"
     return html
 
-# --- 3. Data Loading and Processing ---
+# --- 4. Data Loading and Processing ---
 def create_task_report():
     """Loads data, filters tasks, and generates an HTML report."""
     try:
-        df = pd.read_csv(FILE_NAME, header=8)
+        # ---
+        # !!! השינוי המרכזי כאן !!!
+        # קוראים קובץ אקסל במקום CSV, ומשתמשים בספריית openpyxl
+        df = pd.read_excel(FILE_NAME, header=8, engine='openpyxl')
+        # ---
         
         df = df.dropna(how='all').dropna(axis=1, how='all')
         df.columns = df.columns.str.strip()
@@ -59,7 +60,7 @@ def create_task_report():
         
         df['Finish'] = df.apply(lambda row: row['Start'] + timedelta(days=max(0, row['Days'] - 1)), axis=1)
 
-        # --- 4. Task Filtering ---
+        # --- Task Filtering ---
         start_of_week = TODAY - pd.to_timedelta(TODAY.dayofweek, unit='d')
         end_of_week = start_of_week + pd.to_timedelta(6, unit='d')
 
@@ -70,7 +71,7 @@ def create_task_report():
         tasks_starting_this_week = df[(df['Start'] >= start_of_week) & (df['Start'] <= end_of_week)]
         tasks_active_this_week = df[(df['Start'] <= end_of_week) & (df['Finish'] >= start_of_week)]
 
-        # --- 5. Generate HTML Report ---
+        # --- Generate HTML Report ---
         html_style = """
         <style>
             body { font-family: 'Arial', sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
@@ -106,7 +107,7 @@ def create_task_report():
         print(f"An error occurred during processing: {e}")
         return None
 
-# --- 6. Function to Send Email ---
+# --- 5. Function to Send Email ---
 def send_email(html_content):
     # --- קורא את הפרטים ממשתני הסביבה (Secrets) ---
     SENDER_EMAIL = os.environ.get('GMAIL_USER')
@@ -139,7 +140,7 @@ def send_email(html_content):
     except Exception as e:
         print(f"Error sending email: {e}")
 
-# --- 7. Main execution ---
+# --- 6. Main execution ---
 if __name__ == "__main__":
     report_html = create_task_report()
     
