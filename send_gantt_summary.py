@@ -7,9 +7,9 @@ import os
 
 # --- 1. Configuration ---
 #
-# --- !!! התיקון כאן !!! ---
-# השתמשנו בשם הקובץ הנכון עם קו תחתון (במקום רווח)
-# והסרנו תו נסתר שהיה בסוף השורה
+# --- !!! The fix is here !!! ---
+# We used the correct filename with an underscore (instead of a space)
+# and removed a hidden character that was at the end of the line
 FILE_NAME = "GANTT_TAI.xlsx"
 # ---
 
@@ -23,7 +23,7 @@ def format_tasks_to_html(tasks_df, title):
     if tasks_df.empty:
         return f"<h2>{title}</h2><p>No tasks found for this period.</p>"
     
-    html = f"<h2>{title}</h2>" # תיקון טעות קטנה: F-string חסר
+    html = f"<h2>{title}</h2>" # Minor fix: missing F-string
     html += "<table>"
     html += "<tr><th>Task</th><th>Start Date</th><th>End Date</th></tr>"
     
@@ -41,7 +41,8 @@ def create_task_report():
     """Loads data, filters tasks, and generates an HTML report."""
     try:
         # ---
-        # קוראים קובץ אקסל במקום CSV, ומשתמשים בספריית openpyxl
+        # !!! The main change is here !!!
+        # Reading an Excel file instead of CSV, and using the openpyxl library
         df = pd.read_excel(FILE_NAME, header=8, engine='openpyxl')
         # ---
         
@@ -112,7 +113,7 @@ def create_task_report():
 
 # --- 5. Function to Send Email ---
 def send_email(html_content):
-    # --- קורא את הפרטים ממשתני הסביבה (Secrets) ---
+    # --- Reads the details from environment variables (Secrets) ---
     SENDER_EMAIL = os.environ.get('GMAIL_USER')
     SENDER_PASSWORD = os.environ.get('GMAIL_PASS')
     RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL')
