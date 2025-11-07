@@ -2,8 +2,10 @@ name: Daily Gantt Task Report
 
 on:
   schedule:
-    # Runs every day at 08:00 AM UTC
-    - cron: '0 8 * * *'
+    # Runs every day at 08:00 AM Israel Time (05:00 AM UTC).
+    # Days are defined as 0=Sunday through 6=Saturday.
+    # The range '0-4' runs from Sunday to Thursday, skipping Friday (5) and Saturday (6).
+    - cron: '0 5 * * 0-4'
   # Allows manual run from the GitHub UI
   workflow_dispatch:
 
