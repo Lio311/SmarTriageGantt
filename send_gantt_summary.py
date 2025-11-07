@@ -6,16 +6,11 @@ from email.mime.text import MIMEText
 import os
 
 # --- 1. Configuration ---
-#
-# --- !!! The fix is here !!! ---
-# We used the correct filename with an underscore (instead of a space)
-# and removed a hidden character that was at the end of the line
+# The filename must exactly match the file in your GitHub repository.
 FILE_NAME = "GANTT_TAI.xlsx"
-# ---
 
 # --- 2. Date Configuration ---
 TODAY = pd.to_datetime(datetime.today().date())
-# TODAY = pd.to_datetime('2026-06-01') # For testing with future data
 
 # --- 3. Helper Function to Format Tasks ---
 def format_tasks_to_html(tasks_df, title):
@@ -23,7 +18,7 @@ def format_tasks_to_html(tasks_df, title):
     if tasks_df.empty:
         return f"<h2>{title}</h2><p>No tasks found for this period.</p>"
     
-    html = f"<h2>{title}</h2>" # Minor fix: missing F-string
+    html = f"<h2>{title}</h2>"
     html += "<table>"
     html += "<tr><th>Task</th><th>Start Date</th><th>End Date</th></tr>"
     
@@ -40,11 +35,8 @@ def format_tasks_to_html(tasks_df, title):
 def create_task_report():
     """Loads data, filters tasks, and generates an HTML report."""
     try:
-        # ---
-        # !!! The main change is here !!!
-        # Reading an Excel file instead of CSV, and using the openpyxl library
+        # Read the Excel file using openpyxl, skipping the first 8 rows (header is on row 9)
         df = pd.read_excel(FILE_NAME, header=8, engine='openpyxl')
-        # ---
         
         df = df.dropna(how='all').dropna(axis=1, how='all')
         df.columns = df.columns.str.strip()
@@ -62,6 +54,7 @@ def create_task_report():
         df['Days'] = pd.to_numeric(df['Days'], errors='coerce')
         df = df.dropna(subset=['Start', 'Days'])
         
+        # Calculate INCLUSIVE Finish date (Start + Days - 1)
         df['Finish'] = df.apply(lambda row: row['Start'] + timedelta(days=max(0, row['Days'] - 1)), axis=1)
 
         # --- Task Filtering ---
@@ -111,15 +104,22 @@ def create_task_report():
         print(f"An error occurred during processing: {e}")
         return None
 
-# --- 5. Function to Send Email ---
+# --- 5. Function to Send Email (Updated for Multiple Recipients) ---
 def send_email(html_content):
     # --- Reads the details from environment variables (Secrets) ---
     SENDER_EMAIL = os.environ.get('GMAIL_USER')
     SENDER_PASSWORD = os.environ.get('GMAIL_PASS')
-    RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL')
+    RECIPIENT_EMAIL_STRING = os.environ.get('RECIPIENT_EMAIL') # Read as a comma-separated string
     
-    if not all([SENDER_EMAIL, SENDER_PASSWORD, RECIPIENT_EMAIL]):
+    if not all([SENDER_EMAIL, SENDER_PASSWORD, RECIPIENT_EMAIL_STRING]):
         print("Error: Missing environment variables (GMAIL_USER, GMAIL_PASS, or RECIPIENT_EMAIL).")
+        return
+
+    # Split the string into a list of emails
+    RECIPIENT_EMAILS = [email.strip() for email in RECIPIENT_EMAIL_STRING.split(',') if email.strip()]
+    
+    if not RECIPIENT_EMAILS:
+        print("Error: RECIPIENT_EMAIL secret contained no valid addresses after splitting.")
         return
 
     SMTP_SERVER = "smtp.gmail.com"
@@ -128,7 +128,8 @@ def send_email(html_content):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = f"Gantt Task Summary - {TODAY.strftime('%Y-%m-%d')}"
     msg['From'] = SENDER_EMAIL
-    msg['To'] = RECIPIENT_EMAIL
+    # Set the 'To' field in the email header
+    msg['To'] = ", ".join(RECIPIENT_EMAILS)
     
     msg.attach(MIMEText(html_content, 'html', 'utf-8'))
     
@@ -138,8 +139,11 @@ def send_email(html_content):
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         print("Login successful.")
-        server.sendmail(SENDER_EMAIL, RECIPIENT_EMAIL, msg.as_string())
-        print(f"Email sent successfully to {RECIPIENT_EMAIL}!")
+        
+        # Send the email to all recipients in the list
+        server.sendmail(SENDER_EMAIL, RECIPIENT_EMAILS, msg.as_string())
+        
+        print(f"Email sent successfully to: {RECIPIENT_EMAILS}!")
         server.quit()
     except Exception as e:
         print(f"Error sending email: {e}")
