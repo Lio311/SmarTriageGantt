@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 import os # ייבוא חדש - קריטי לקריאת Secrets
 
 # --- 1. Configuration ---
-FILE_NAME = "GANTT TAI.xlsx - Light.csv"
+FILE_NAME = "GANTT TAI.xlsx"
 
 # ---
 # קביעת התאריך של "היום"
